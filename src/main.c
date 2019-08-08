@@ -536,29 +536,29 @@ static int game_handler(int type, int par1, int par2)
     case EVT_KEYPRESS:
       switch (par1)
 	{
-	case KEY_OK:
+	case IV_KEY_OK:
 	  select_cell();
 	  break;
 
-	case KEY_LEFT:
+	case IV_KEY_LEFT:
 	  generic_move(move_left);
 	  break;
 
-	case KEY_RIGHT:
+	case IV_KEY_RIGHT:
 	  generic_move(move_right);
 	  break;
 
-	case KEY_UP:
+	case IV_KEY_UP:
 	  generic_move(move_up);
 	  break;
 
-	case KEY_DOWN:
+	case IV_KEY_DOWN:
 	  generic_move(move_down);
 	  break;
 
-	case KEY_PREV:
-	case KEY_NEXT:
-	case KEY_MENU:
+	case IV_KEY_PREV:
+	case IV_KEY_NEXT:
+	case IV_KEY_MENU:
 	  {
 	    static message_id game_menu[] = {
 	      MSG_CONTINUE,
@@ -757,6 +757,7 @@ static int main_handler(int type, int par1, int par2)
   switch (type)
     {
     case EVT_INIT:
+      SetPanelType(PANEL_DISABLED);
       srand(time(NULL));
       bitmaps_init();
       read_state();

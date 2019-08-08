@@ -148,7 +148,7 @@ static int menu_handler(int type, int par1, int par2)
     case EVT_KEYPRESS:
       switch (par1)
 	{
-	case KEY_UP:
+	case IV_KEY_UP:
 	  do
 	    {
 	      menu->current = (menu->current + menu->count - 1) % menu->count;
@@ -158,7 +158,7 @@ static int menu_handler(int type, int par1, int par2)
 	  draw_popup(menu);
 	  menu_update(menu);
 	  break;
-	case KEY_DOWN:
+	case IV_KEY_DOWN:
 	  do
 	    {
 	      menu->current = (menu->current + 1) % menu->count;
@@ -168,7 +168,7 @@ static int menu_handler(int type, int par1, int par2)
 	  draw_popup(menu);
 	  menu_update(menu);
 	  break;
-	case KEY_OK:
+	case IV_KEY_OK:
 	  menu->proc(menu->items[menu->current]);
 	  break;
 	}
