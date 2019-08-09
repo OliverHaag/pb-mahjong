@@ -1,56 +1,70 @@
 MESSAGE(NEW_GAME_EASY,
 	"New game (Easy)",
-	"Новая игра (Лёгкая)")
+	"Новая игра (Лёгкая)",
+	"Neues Spiel (einfach)")
 
 MESSAGE(NEW_GAME_DIFFICULT,
 	"New game (Difficult)",
-	"Новая игра (Тяжёлая)")
+	"Новая игра (Тяжёлая)",
+	"Neues Spiel (schwierig)")
 
 MESSAGE(NEW_GAME_FOUR_BRIDGES,
 	"New game (Four Bridges)",
-	"Новая игра (Четыре моста)")
+	"Новая игра (Четыре моста)",
+	"Neues Spiel (Vier Brücken)")
 
 MESSAGE(LOAD,
 	"Load game",
-	"Загрузить игру")
+	"Загрузить игру",
+	"Spiel laden")
 
 MESSAGE(EXIT,
 	"Exit",
-	"Выход")
+	"Выход",
+	"Beenden")
 
 MESSAGE(CHANGE_ORIENTATION,
 	"Change screen orientation",
-	"Сменить ориентацию экрана")
+	"Сменить ориентацию экрана",
+	"Bildschrim drehen")
 
 MESSAGE(CONTINUE,
 	"Continue",
-	"Продолжить")
+	"Продолжить",
+	"Spiel fortsetzen")
 
 MESSAGE(HINT,
 	"Hint",
-	"Подсказать")
+	"Подсказать",
+	"Hinweis")
 
 MESSAGE(UNDO,
 	"Undo",
-	"Отменить ход")
+	"Отменить ход",
+	"Zug zurücknehmen")
 
 MESSAGE(TOGGLE_LANGUAGE,
 	"Русский",
+	"Deutsch",
 	"English")
 
-MESSAGE(WIN,
+MESSAGE( WIN,
 	"Solitaire is solved. Congratulations!",
-	"Пасьянс решён. Поздравляем!")
+	"Пасьянс решён. Поздравляем!",
+	"Glückwunsch, das Spiel ist gelöst!" )
 
-MESSAGE(LOSE,
+MESSAGE( LOSE,
 	"There is no more free pair. You lose",
-	"Свободных пар больше нет. Вы проиграли.")
+	"Свободных пар больше нет. Вы проиграли.",
+	"Keine freien Paare mehr, du verlierst." )
 
 MESSAGE(MOVES_LEFT,
 	"Available pairs: %d",
-	"Доступно пар: %d")
+	"Доступно пар: %d",
+	"Verfügbare Paare: %d")
 
 MESSAGE(HELP,
-	"←, ↑, →, ↓ - cursor movement, OK - select chip, Menu - game menu",
-	"←, ↑, →, ↓ - перемещение курсора, OK - выбор камня, Menu - меню игры")
+	"Menu : game menu",
+	"Menu : меню игры",
+	"Menu : Spielmenü anzeigen")
 

@@ -4,7 +4,7 @@
 typedef enum {
   MSG_SEPARATOR = -1,
   MSG_NONE = 0,
-#define MESSAGE(c, e, r) MSG_##c,
+#define MESSAGE(c, e, r, d) MSG_##c,
 #include "messages.inc"
 #undef MESSAGE
   MSG_COUNT
@@ -12,7 +12,8 @@ typedef enum {
 
 typedef enum {
   ENGLISH,
-  RUSSIAN
+  RUSSIAN,
+  GERMAN
 } language_t;
 
 extern language_t current_language;

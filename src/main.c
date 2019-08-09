@@ -33,7 +33,7 @@ static int game_active = 0;
 
 extern const ibitmap background;
 
-#define HELP_HEIGHT (20)
+#define HELP_HEIGHT (40)
 
 static void menu_handler(int index);
 static void read_state(void);
@@ -159,14 +159,29 @@ static void cell_rect(const position_t *pos, struct rect *r)
   r->h = 2 * h;
 }
 
-static void draw_caret(const struct rect *r, int color)
+/*static void draw_caret(const struct rect *r, int color)
 {
   DrawRect(r->x + 2, r->y + 2, r->w - 4, r->h - 4, color);
   DrawRect(r->x + 3, r->y + 3, r->w - 6, r->h - 6, color);
   DrawRect(r->x + 4, r->y + 4, r->w - 8, r->h - 8, color);
   DrawRect(r->x + 5, r->y + 5, r->w - 10, r->h - 10, color);
   DrawRect(r->x + 6, r->y + 6, r->w - 12, r->h - 12, color);
-}
+}*/
+
+
+#define BW 5
+
+#ifdef DGRAY
+#undef DGRAY
+#endif
+
+#define DGRAY 0x303030
+
+#ifdef LGRAY
+#undef LGRAY
+#endif
+
+#define LGRAY 0x707070
 
 static void draw_chip(const position_t *pos, chip_t chip)
 {
@@ -174,33 +189,34 @@ static void draw_chip(const position_t *pos, chip_t chip)
   struct rect r;
 
   cell_rect(pos, &r);
-  DrawRect(r.x - 4, r.y - 4, r.w, r.h, DGRAY);
+  DrawRect(r.x - BW, r.y - BW, r.w, r.h, DGRAY);
 
-  for (i = 0; i < 3; ++i)
+  for(i = 1; i < BW; ++i)
     {
-      DrawLine(r.x - 1 - i, r.y - 1 - i, r.x - 1 - i, r.y - 1 - i + r.h - 1, LGRAY);
-      DrawLine(r.x - 1 - i, r.y - 1 - i, r.x - 1 - i + r.w - 1, r.y - 1 - i, LGRAY);
+      DrawLine(r.x - i, r.y - i, r.x - i, r.y - i + r.h - 1, LGRAY);
+      DrawLine(r.x - i, r.y - i, r.x - i + r.w - 1, r.y - i, LGRAY);
     }
-  DrawLine(r.x - 4, r.y - 4, r.x, r.y, DGRAY);
-  DrawLine(r.x - 4 + r.w - 1, r.y - 4, r.x + r.w - 1, r.y, DGRAY);
-  DrawLine(r.x - 4, r.y - 4 + r.h - 1, r.x, r.y + r.h - 1, DGRAY);
+
+  DrawLine(r.x - BW, r.y - BW, r.x, r.y, DGRAY);
+  DrawLine(r.x - BW + r.w - 1, r.y - BW, r.x + r.w - 1, r.y, DGRAY);
+  DrawLine(r.x - BW, r.y - BW + r.h - 1, r.x, r.y + r.h - 1, DGRAY);
 
   FillArea(r.x, r.y, r.w, r.h, WHITE);
-  DrawRect(r.x, r.y, r.w, r.h, DGRAY);
+  DrawRect(r.x, r.y, r.w, r.h, BLACK);
 
   StretchBitmap(r.x + 1, r.y + 1, r.w - 2, r.h - 2, (ibitmap*)bitmaps[chip], 0);
 
-  if (caret_pos >= 0 && caret_pos < g_selectable->count)
-    {
-      if (position_equal(pos, &g_selectable->positions[caret_pos]))
-	draw_caret(&r, DGRAY);
-    }
+  /*if (caret_pos >= 0 && caret_pos < g_selectable->count)
+  {
+    if (position_equal(pos, &g_selectable->positions[caret_pos]))
+    draw_caret(&r, DGRAY);
+  }*/
 
   if (selection_pos >= 0 && selection_pos < g_selectable->count)
     {
       position_t *selection = &g_selectable->positions[selection_pos];
       if (position_equal(pos, selection))
-	InvertArea(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+        InvertArea(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
     }
 }
 
@@ -230,7 +246,7 @@ static ifont *g_help_font = NULL;
 static ifont *get_help_font(void)
 {
   if (g_help_font == NULL)
-    g_help_font = OpenFont(DEFAULTFONTB, 16, 1);
+    g_help_font = OpenFont(DEFAULTFONTB, 28, 1);
   return g_help_font;
 }
 
@@ -243,16 +259,16 @@ static void main_repaint(void)
   for (i = 0; i < MAX_ROW_COUNT; ++i)
     for (j = 0; j < MAX_COL_COUNT; ++j)
       for (k = 0; k < MAX_HEIGHT; ++k)
-	{
-	  const chip_t chip = g_board.columns[i][j].chips[k];
-	  if (chip)
-	    {
-	      chips[chip_count].x = j;
-	      chips[chip_count].y = i;
-	      chips[chip_count].k = k;
-	      ++chip_count;
-	    }
-	}
+        {
+          const chip_t chip = g_board.columns[i][j].chips[k];
+          if (chip)
+            {
+              chips[chip_count].x = j;
+              chips[chip_count].y = i;
+              chips[chip_count].k = k;
+              ++chip_count;
+            }
+        }
   topological_sort(chips, chip_count, sizeof(position_t), is_covered_by);
 
   ClearScreen();
@@ -272,7 +288,7 @@ static void main_repaint(void)
     r.h = HELP_HEIGHT;
 
     DrawLine(r.x, r.y, r.x + r.w, r.y, BLACK);
-    FillArea(r.x, r.y + 2, r.w, r.h - 2, DGRAY);
+    FillArea(r.x, r.y + 2, r.w, r.h - 2, LGRAY);
 
     SetFont(get_help_font(), WHITE);
 
@@ -284,15 +300,15 @@ static void main_repaint(void)
     {
       int pairs = 0;
       for (i = 0; i < g_selectable->count - 1; ++i)
-	{
-	  const chip_t chip1 = board_get(&g_board, &g_selectable->positions[i]);
-	  for (j = i + 1; j < g_selectable->count; ++j)
-	    {
-	      const chip_t chip2 = board_get(&g_board, &g_selectable->positions[j]);
-	      if (fits(chip1, chip2))
-		++pairs;
-	    }
-	}
+        {
+          const chip_t chip1 = board_get(&g_board, &g_selectable->positions[i]);
+          for (j = i + 1; j < g_selectable->count; ++j)
+            {
+              const chip_t chip2 = board_get(&g_board, &g_selectable->positions[j]);
+              if (fits(chip1, chip2))
+                ++pairs;
+            }
+        }
 
       char buffer[256];
       snprintf(buffer, 256, get_message(MSG_MOVES_LEFT), pairs);
@@ -303,7 +319,7 @@ static void main_repaint(void)
   }
 }
 
-static int move_left(void)
+/*static int move_left(void)
 {
   if (caret_pos > 0)
     --caret_pos;
@@ -333,17 +349,17 @@ static int move_up(void)
   for (i = 0; i < g_selectable->count; ++i)
     if (i != caret_pos)
       {
-	const position_t *pos = &g_selectable->positions[i];
-	int pos_row = (pos->y - 1) / 2;
-	if (caret_row <= pos_row)
-	  pos_row -= MAX_COL_COUNT;
+        const position_t *pos = &g_selectable->positions[i];
+        int pos_row = (pos->y - 1) / 2;
+        if (caret_row <= pos_row)
+          pos_row -= MAX_COL_COUNT;
 
-	const int dist = abs(caret_row - pos_row) * MAX_COL_COUNT + abs(caret->x - pos->x);
-	if (dist < min_dist)
-	  {
-	    new_pos = i;
-	    min_dist = dist;
-	  }
+        const int dist = abs(caret_row - pos_row) * MAX_COL_COUNT + abs(caret->x - pos->x);
+        if (dist < min_dist)
+          {
+            new_pos = i;
+            min_dist = dist;
+          }
       }
 
   if (new_pos != caret_pos)
@@ -366,17 +382,17 @@ static int move_down(void)
   for (i = 0; i < g_selectable->count; ++i)
     if (i != caret_pos)
       {
-	const position_t *pos = &g_selectable->positions[i];
+        const position_t *pos = &g_selectable->positions[i];
         int pos_row = (pos->y - 1) / 2;
-	if (caret_row >= pos_row)
-	  pos_row += MAX_COL_COUNT;
+        if (caret_row >= pos_row)
+          pos_row += MAX_COL_COUNT;
 
-	const int dist = abs(caret_row - pos_row) * MAX_COL_COUNT + abs(caret->x - pos->x);
-	if (dist < min_dist)
-	  {
-	    new_pos = i;
-	    min_dist = dist;
-	  }
+        const int dist = abs(caret_row - pos_row) * MAX_COL_COUNT + abs(caret->x - pos->x);
+        if (dist < min_dist)
+          {
+            new_pos = i;
+            min_dist = dist;
+          }
       }
 
   if (new_pos != caret_pos)
@@ -403,7 +419,7 @@ static void generic_move(int (*move_func)(void))
 
       PartialUpdate(r.x, r.y, r.w, r.h);
     }
-}
+}*/
 
 static int finished(void)
 {
@@ -412,14 +428,14 @@ static int finished(void)
   for (i = 0; i < MAX_ROW_COUNT; ++i)
     for (j = 0; j < MAX_COL_COUNT; ++j)
       for (k = 0; k < MAX_HEIGHT; ++k)
-	{
-	  position_t pos;
-	  pos.y = i;
-	  pos.x = j;
-	  pos.k = k;
-	  if (board_get(&g_board, &pos) != 0)
-	    return 0;
-	}
+        {
+          position_t pos;
+          pos.y = i;
+          pos.x = j;
+          pos.k = k;
+          if (board_get(&g_board, &pos) != 0)
+            return 0;
+        }
   return 1;
 }
 
@@ -431,11 +447,11 @@ static int pair_exists(board_t *board)
     {
       const chip_t chip1 = board_get(board, &g_selectable->positions[i]);
       for (j = i + 1; j < g_selectable->count; ++j)
-	{
-	  const chip_t chip2 = board_get(board, &g_selectable->positions[j]);
-	  if (fits(chip1, chip2))
-	    return 1;
-	}
+        {
+          const chip_t chip2 = board_get(board, &g_selectable->positions[j]);
+          if (fits(chip1, chip2))
+            return 1;
+        }
     }
   return 0;
 }
@@ -472,34 +488,34 @@ static void select_cell(void)
       rebuild_selectables();
       // find caret pos
       if (caret_pos >= g_selectable->count)
-	caret_pos = g_selectable->count - 1;
+        caret_pos = g_selectable->count - 1;
 
       static message_id finish_menu[] = {
-	MSG_NEW_GAME_EASY,
-	MSG_NEW_GAME_DIFFICULT,
-	MSG_NEW_GAME_FOUR_BRIDGES,
-	MSG_SEPARATOR,
-	MSG_EXIT,
-	MSG_NONE
+        MSG_NEW_GAME_EASY,
+        MSG_NEW_GAME_DIFFICULT,
+        MSG_NEW_GAME_FOUR_BRIDGES,
+        MSG_SEPARATOR,
+        MSG_EXIT,
+        MSG_NONE
       };
 
       if (finished())
-	{
-	  game_active = 0;
-	  clear_undo_stack();
-	  show_popup(&background, MSG_WIN, finish_menu, menu_handler);
-	}
+        {
+          game_active = 0;
+          clear_undo_stack();
+          show_popup(&background, MSG_WIN, finish_menu, menu_handler);
+        }
       else if (!pair_exists(&g_board))
         {
-	  game_active = 0;
-	  clear_undo_stack();
-	  show_popup(&background, MSG_LOSE, finish_menu, menu_handler);
+          game_active = 0;
+          clear_undo_stack();
+          show_popup(&background, MSG_LOSE, finish_menu, menu_handler);
         }
       else
-	{
-	  main_repaint();
-	  FullUpdate();
-	}
+        {
+          main_repaint();
+          FullUpdate();
+        }
     }
   else
     {
@@ -512,14 +528,14 @@ static void select_cell(void)
       cell_rect(&g_selectable->positions[selection_pos], &r);
 
       if (prev_selection_pos != -1)
-	{
-	  struct rect r1;
-	  struct rect r2;
+        {
+          struct rect r1;
+          struct rect r2;
 
-	  r1 = r;
-	  cell_rect(&g_selectable->positions[prev_selection_pos], &r2);
-	  union_rect(&r1, &r2, &r);
-	}
+          r1 = r;
+          cell_rect(&g_selectable->positions[prev_selection_pos], &r2);
+          union_rect(&r1, &r2, &r);
+        }
 
       PartialUpdate(r.x, r.y, r.w, r.h);
     }
@@ -535,89 +551,89 @@ static int game_handler(int type, int par1, int par2)
       break;
     case EVT_KEYPRESS:
       switch (par1)
-	{
-	case IV_KEY_OK:
-	  select_cell();
-	  break;
+        {
+        /*case IV_KEY_OK:
+          select_cell();
+          break;
 
-	case IV_KEY_LEFT:
-	  generic_move(move_left);
-	  break;
+        case IV_KEY_LEFT:
+          generic_move(move_left);
+          break;
 
-	case IV_KEY_RIGHT:
-	  generic_move(move_right);
-	  break;
+        case IV_KEY_RIGHT:
+          generic_move(move_right);
+          break;
 
-	case IV_KEY_UP:
-	  generic_move(move_up);
-	  break;
+        case IV_KEY_UP:
+          generic_move(move_up);
+          break;
 
-	case IV_KEY_DOWN:
-	  generic_move(move_down);
-	  break;
+        case IV_KEY_DOWN:
+          generic_move(move_down);
+          break;
 
-	case IV_KEY_PREV:
-	case IV_KEY_NEXT:
-	case IV_KEY_MENU:
-	  {
-	    static message_id game_menu[] = {
-	      MSG_CONTINUE,
-	      MSG_HINT,
-	      MSG_SEPARATOR,
-	      MSG_NEW_GAME_EASY,
-	      MSG_NEW_GAME_DIFFICULT,
-	      MSG_NEW_GAME_FOUR_BRIDGES,
-	      MSG_SEPARATOR,
-	      MSG_EXIT,
-	      MSG_NONE
-	    };
+        case IV_KEY_PREV:
+        case IV_KEY_NEXT:*/
+        case IV_KEY_MENU:
+          {
+            static message_id game_menu[] = {
+              MSG_CONTINUE,
+              MSG_HINT,
+              MSG_SEPARATOR,
+              MSG_NEW_GAME_EASY,
+              MSG_NEW_GAME_DIFFICULT,
+              MSG_NEW_GAME_FOUR_BRIDGES,
+              MSG_SEPARATOR,
+              MSG_EXIT,
+              MSG_NONE
+            };
 
-	    static message_id game_menu_with_undo[] = {
-	      MSG_CONTINUE,
-	      MSG_HINT,
-	      MSG_UNDO,
-	      MSG_SEPARATOR,
-	      MSG_NEW_GAME_EASY,
-	      MSG_NEW_GAME_DIFFICULT,
-	      MSG_NEW_GAME_FOUR_BRIDGES,
-	      MSG_SEPARATOR,
-	      MSG_EXIT,
-	      MSG_NONE
-	    };
-	    if (undo_stack.count != 0)
-	      show_popup(NULL, MSG_NONE, game_menu_with_undo, menu_handler);
-	    else
-	      show_popup(NULL, MSG_NONE, game_menu, menu_handler);
-	    return 1;
-	  }
-	}
+            static message_id game_menu_with_undo[] = {
+              MSG_CONTINUE,
+              MSG_HINT,
+              MSG_UNDO,
+              MSG_SEPARATOR,
+              MSG_NEW_GAME_EASY,
+              MSG_NEW_GAME_DIFFICULT,
+              MSG_NEW_GAME_FOUR_BRIDGES,
+              MSG_SEPARATOR,
+              MSG_EXIT,
+              MSG_NONE
+            };
+            if (undo_stack.count != 0)
+              show_popup(NULL, MSG_NONE, game_menu_with_undo, menu_handler);
+            else
+              show_popup(NULL, MSG_NONE, game_menu, menu_handler);
+            return 1;
+          }
+        }
       break;
     case EVT_POINTERDOWN:
       {
-	int i;
-	int rx, ry;
+        int i;
+        int rx, ry;
 
-	point_change_orientation(par1, par2, GetOrientation(), &rx, &ry);
+        point_change_orientation(par1, par2, GetOrientation(), &rx, &ry);
 
-	for (i = 0; i < g_selectable->count; ++i)
-	  {
-	    struct rect r;
-	    cell_rect(&g_selectable->positions[i], &r);
-	    if (point_in_rect(rx, ry, &r))
-	      {
-		int prev_caret_pos = caret_pos;
-		struct rect prev_r;
+        for (i = 0; i < g_selectable->count; ++i)
+          {
+            struct rect r;
+            cell_rect(&g_selectable->positions[i], &r);
+            if (point_in_rect(rx, ry, &r))
+              {
+                int prev_caret_pos = caret_pos;
+                struct rect prev_r;
 
-		caret_pos = i;
+                caret_pos = i;
 
-		main_repaint();
-		cell_rect(&g_selectable->positions[prev_caret_pos], &prev_r);
-		PartialUpdate(prev_r.x, prev_r.y, prev_r.w, prev_r.h);
+                main_repaint();
+                cell_rect(&g_selectable->positions[prev_caret_pos], &prev_r);
+                PartialUpdate(prev_r.x, prev_r.y, prev_r.w, prev_r.h);
 
-		select_cell();
-		break;
-	      }
-	  }
+                select_cell();
+                break;
+              }
+          }
       }
       break;
     }
@@ -631,24 +647,24 @@ static void make_hint(void)
   while (1)
     {
       for (i = help_index; i < g_selectable->count - 1; ++i)
-	{
-	  const chip_t chip1 = board_get(&g_board, &g_selectable->positions[i]);
+        {
+          const chip_t chip1 = board_get(&g_board, &g_selectable->positions[i]);
 
-	  for (j = i + 1 + help_offset; j < g_selectable->count; ++j)
-	    {
-	      const chip_t chip2 = board_get(&g_board, &g_selectable->positions[j]);
+          for (j = i + 1 + help_offset; j < g_selectable->count; ++j)
+            {
+              const chip_t chip2 = board_get(&g_board, &g_selectable->positions[j]);
 
-	      if (fits(chip1, chip2))
-		{
-		  help_index = i;
-		  help_offset = j - i - 1 + 1;
-		  selection_pos = i;
-		  caret_pos = j;
-		  return;
-		}
-	    }
-	  help_offset = 0;
-	}
+              if (fits(chip1, chip2))
+                {
+                  help_index = i;
+                  help_offset = j - i - 1 + 1;
+                  selection_pos = i;
+                  caret_pos = j;
+                  return;
+                }
+            }
+          help_offset = 0;
+        }
       help_index = 0;
       help_offset = 0;
     }
@@ -717,17 +733,19 @@ static void menu_handler(int index)
 
     case MSG_LOAD:
       if (load_game())
-	{
- 	  start_game();
-	  SetEventHandler(game_handler);
-	}
+        {
+           start_game();
+          SetEventHandler(game_handler);
+        }
       break;
 
     case MSG_TOGGLE_LANGUAGE:
       if (current_language == ENGLISH)
-	current_language = RUSSIAN;
+        current_language = RUSSIAN;
+      else if (current_language == RUSSIAN)
+        current_language = GERMAN;
       else
-	current_language = ENGLISH;
+        current_language = ENGLISH;
       show_popup(&background, MSG_NONE, main_menu, menu_handler);
       break;
 
@@ -746,7 +764,7 @@ static void menu_handler(int index)
     case MSG_EXIT:
       write_state();
       if (game_active)
-	save_game();
+        save_game();
       CloseApp();
       break;
     }
@@ -763,15 +781,15 @@ static int main_handler(int type, int par1, int par2)
       read_state();
       SetOrientation(orientation);
       if (!access(SAVED_GAME_PATH, R_OK))
-	main_menu = main_menu_w_load;
+        main_menu = main_menu_w_load;
       else
-	main_menu = main_menu_wo_load;
+        main_menu = main_menu_wo_load;
       
       show_popup(&background, MSG_NONE, main_menu, menu_handler);
       break;
     case EVT_EXIT:
       if (game_active)
-	save_game();
+        save_game();
       break;
     }
   return 0;
@@ -792,7 +810,7 @@ static void read_state(void)
   while (fgets(line, sizeof(line), f))
     {
       if (regexec(&reg, line, 16, pmatch, 0))
-	continue;
+        continue;
 
       const char *key = &line[pmatch[1].rm_so];
       line[pmatch[1].rm_eo] = '\0';
@@ -801,19 +819,19 @@ static void read_state(void)
       line[pmatch[4].rm_eo] = '\0';
 
       if (!strcmp(key, "language"))
-	{
-	  if (!strcmp(value, "en"))
-	    current_language = ENGLISH;
-	  else if (!strcmp(value, "ru"))
-	    current_language = RUSSIAN;
-	}
+        {
+          if (!strcmp(value, "en"))
+            current_language = ENGLISH;
+          else if (!strcmp(value, "ru"))
+            current_language = RUSSIAN;
+        }
       else if (!strcmp(key, "orientation"))
-	{
-	  if (!strcmp(value, "90"))
-	    orientation = ROTATE90;
-	  else if (!strcmp(value, "270"))
-	    orientation = ROTATE270;
-	}
+        {
+          if (!strcmp(value, "90"))
+            orientation = ROTATE90;
+          else if (!strcmp(value, "270"))
+            orientation = ROTATE270;
+        }
     }
   fclose(f);
 
@@ -830,6 +848,8 @@ static void write_state(void)
     fprintf(f, "language = en\n");
   else if (current_language == RUSSIAN)
     fprintf(f, "language = ru\n");
+  else if (current_language == GERMAN)
+    fprintf(f, "language = de\n");
 
   if (orientation == ROTATE90)
     fprintf(f, "orientation = 90\n");
@@ -852,27 +872,27 @@ static int load_game(void)
   for (i = 0; i < MAX_ROW_COUNT; ++i)
     for (j = 0; j < MAX_COL_COUNT; ++j)
       for (k = 0; k < MAX_HEIGHT; ++k)
-	{
-	  int ch;
-	  position_t pos;
-	  pos.y = i;
-	  pos.x = j;
-	  pos.k = k;
+        {
+          int ch;
+          position_t pos;
+          pos.y = i;
+          pos.x = j;
+          pos.k = k;
 
-	  fscanf(f, "%d\n", &ch);
+          fscanf(f, "%d\n", &ch);
 
-	  board_set(&g_board, &pos, ch);
-	}
+          board_set(&g_board, &pos, ch);
+        }
 
   fscanf(f, "%d\n", &undo_stack.count);
   for (i = 0; i < undo_stack.count; ++i)
     {
       int chip;
       fscanf(f, "%d %d %d %d\n",
-	     &undo_stack.positions[i].y,
-	     &undo_stack.positions[i].x,
-	     &undo_stack.positions[i].k,
-	     &chip);
+             &undo_stack.positions[i].y,
+             &undo_stack.positions[i].x,
+             &undo_stack.positions[i].k,
+             &chip);
       undo_stack.chips[i] = chip;
     }
 
@@ -894,24 +914,24 @@ static void save_game(void)
   for (i = 0; i < MAX_ROW_COUNT; ++i)
     for (j = 0; j < MAX_COL_COUNT; ++j)
       for (k = 0; k < MAX_HEIGHT; ++k)
-	{
-	  chip_t ch;
-	  position_t pos;
-	  pos.y = i;
-	  pos.x = j;
-	  pos.k = k;
-	  ch = board_get(&g_board, &pos);
+        {
+          chip_t ch;
+          position_t pos;
+          pos.y = i;
+          pos.x = j;
+          pos.k = k;
+          ch = board_get(&g_board, &pos);
 
-	  fprintf(f, "%d\n", ch);
-	}
+          fprintf(f, "%d\n", ch);
+        }
 
   fprintf(f, "%d\n", undo_stack.count);
   for (i = 0; i < undo_stack.count; ++i)
     fprintf(f, "%d %d %d %d\n",
-	    undo_stack.positions[i].y,
-	    undo_stack.positions[i].x,
-	    undo_stack.positions[i].k,
-	    undo_stack.chips[i]);
+            undo_stack.positions[i].y,
+            undo_stack.positions[i].x,
+            undo_stack.positions[i].k,
+            undo_stack.chips[i]);
 
   fclose(f);
 }
