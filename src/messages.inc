@@ -1,12 +1,12 @@
 MESSAGE(NEW_GAME_EASY,
 	"New game (Easy)",
 	"Новая игра (Лёгкая)",
-	"Neues Spiel (einfach)")
+	"Neues Spiel (Einfach)")
 
 MESSAGE(NEW_GAME_DIFFICULT,
 	"New game (Difficult)",
 	"Новая игра (Тяжёлая)",
-	"Neues Spiel (schwierig)")
+	"Neues Spiel (Schwierig)")
 
 MESSAGE(NEW_GAME_FOUR_BRIDGES,
 	"New game (Four Bridges)",
@@ -26,7 +26,7 @@ MESSAGE(EXIT,
 MESSAGE(CHANGE_ORIENTATION,
 	"Change screen orientation",
 	"Сменить ориентацию экрана",
-	"Bildschrim drehen")
+	"Bildschirm drehen")
 
 MESSAGE(CONTINUE,
 	"Continue",
@@ -54,7 +54,7 @@ MESSAGE( WIN,
 	"Glückwunsch, das Spiel ist gelöst!" )
 
 MESSAGE( LOSE,
-	"There is no more free pair. You lose",
+	"There is no more free pair. You lose.",
 	"Свободных пар больше нет. Вы проиграли.",
 	"Keine freien Paare mehr, du verlierst." )
 
@@ -67,4 +67,3 @@ MESSAGE(HELP,
 	"Menu : game menu",
 	"Menu : меню игры",
 	"Menu : Spielmenü anzeigen")
-

@@ -22,4 +22,3 @@ void shuffle(void *obj, size_t nmemb, size_t size);
 void topological_sort(void *array, size_t nmemb, size_t size, int (*has_edge)(const void*, const void*));
 
 #endif
-

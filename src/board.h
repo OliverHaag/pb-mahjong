@@ -50,4 +50,3 @@ typedef struct tag_map {
 void generate_board(board_t *board, map_t *map);
 
 #endif
-

@@ -90,4 +90,3 @@ void bitmaps_init(void)
   bitmaps[0xE3] = &chip_E3;
   bitmaps[0xE4] = &chip_E4;
 }
-

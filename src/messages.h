@@ -23,4 +23,3 @@ const char * get_message_ex(message_id id, language_t language);
 #define get_message(id) (get_message_ex((id), current_language))
   
 #endif
-

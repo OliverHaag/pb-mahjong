@@ -46,7 +46,7 @@ static int column_height(board_t *board, int y, int x)
     {
       chip_t chip = board->columns[y][x].chips[k];
       if (chip)
-	return k + 1;
+        return k + 1;
     }
   return 0;
 }
@@ -75,7 +75,7 @@ static int selectable(board_t *board, int y, int x)
   for (i = -1; i <= 1; ++i)
     for (j = -1; j <= 1; ++j)
       if (safe_get(board, y+i, x+j, h) != 0)
-	return 0;
+        return 0;
 
   l = safe_get(board, y-1, x-2, h-1)
     || safe_get(board, y, x-2, h-1)
@@ -84,7 +84,7 @@ static int selectable(board_t *board, int y, int x)
   r = safe_get(board, y-1, x+2, h-1)
     || safe_get(board, y, x+2, h-1)
     || safe_get(board, y+1, x+2, h-1);
-	
+
   if (l && r)
     return 0;
 
@@ -101,14 +101,14 @@ positions_t* get_selectable_positions(board_t *board)
   for (i = 0; i < MAX_ROW_COUNT; ++i)
     for (j = 0; j < MAX_COL_COUNT; ++j)
       {
-	int h = selectable(board, i, j);
-	if (h)
-	  {
-	    positions->positions[positions->count].y = i;
-	    positions->positions[positions->count].x = j;
-	    positions->positions[positions->count].k = h - 1;
-	    ++positions->count;
-	  }
+        int h = selectable(board, i, j);
+        if (h)
+          {
+            positions->positions[positions->count].y = i;
+            positions->positions[positions->count].x = j;
+            positions->positions[positions->count].k = h - 1;
+            ++positions->count;
+          }
       }
 
   return positions;
@@ -140,23 +140,23 @@ static int colorize(board_t *board, chip_t *pairs, int pile_size, board_t *resul
   for (i = 0; i < positions->count - 1; ++i)
     for (j = i + 1; j < positions->count; ++j)
       {
-	const position_t* p1 = &positions->positions[i];
-	const position_t* p2 = &positions->positions[j];
+        const position_t* p1 = &positions->positions[i];
+        const position_t* p2 = &positions->positions[j];
 
-	board_set(board, p1, 0);
-	board_set(board, p2, 0);
+        board_set(board, p1, 0);
+        board_set(board, p2, 0);
 
-	if (colorize(board, &pairs[2], pile_size - 2, result_board))
-	  {
-	    board_set(result_board, p1, pairs[0]);
-	    board_set(result_board, p2, pairs[1]);
-	    
-	    free(positions);
-	    return 1;
-	  }
+        if (colorize(board, &pairs[2], pile_size - 2, result_board))
+          {
+            board_set(result_board, p1, pairs[0]);
+            board_set(result_board, p2, pairs[1]);
+            
+            free(positions);
+            return 1;
+          }
 
-	board_set(board, p1, 0xFF);
-	board_set(board, p2, 0xFF);
+        board_set(board, p1, 0xFF);
+        board_set(board, p2, 0xFF);
       }
   
   free(positions);
@@ -173,26 +173,26 @@ static void get_pile(chip_t pile[144])
     {
       /*stones*/
       for (i = 0; i < 4; ++i)
-	pile[c++] = 0x51 + j;
+        pile[c++] = 0x51 + j;
       /*bamboos*/
       for (i = 0; i < 4; ++i)
-	pile[c++] = 0x61 + j;
+        pile[c++] = 0x61 + j;
       /*characters*/
       for (i = 0; i < 4; ++i)
-	pile[c++] = 0x71 + j;
+        pile[c++] = 0x71 + j;
     }
   /**honors**/
   for (j = 0; j < 4; ++j)
     {
       /*winds*/
       for (i = 0; i < 4; ++i)
-	pile[c++] = 0x91 + j;
+        pile[c++] = 0x91 + j;
     }
   for (j = 0; j < 3; ++j)
     {
       /*dragons*/
       for (i = 0; i < 4; ++i)
-	pile[c++] = 0xA1 + j;
+        pile[c++] = 0xA1 + j;
     }
   /**flowers**/
   /*plants*/
@@ -201,7 +201,7 @@ static void get_pile(chip_t pile[144])
   /*seasons*/
   for (j = 0; j < 4; ++j)
     pile[c++] = 0xE1 + j;
-}		
+}
 
 static void clear_board(board_t *board)
 {
@@ -237,4 +237,3 @@ void generate_board(board_t *board, map_t *map)
   clear_board(board);
   colorize(&tmp, pile, 144, board);
 }
-

@@ -3,10 +3,10 @@
 #include "geometry.h"
 
 #define MENU_FONT_NAME (DEFAULTFONT)
-#define MENU_FONT_SIZE (28)
-#define MENU_MARGIN (15)
-#define MENU_ITEM_HEIGHT (40)
-#define MENU_SEPARATOR_HEIGHT (8)
+#define MENU_FONT_SIZE (40)
+#define MENU_MARGIN (20)
+#define MENU_ITEM_HEIGHT (60)
+#define MENU_SEPARATOR_HEIGHT (20)
 
 typedef struct {
   const ibitmap *background;
@@ -89,9 +89,6 @@ static void draw_popup(menu_t *menu)
                        MENU_ITEM_HEIGHT,
                        (char*)get_message(menu->items[i]),
                        ALIGN_LEFT | VALIGN_MIDDLE);
-
-/*          if (i == menu->current)
-            DrawSelection(menu->bounds.x - 5, y, menu->bounds.w + 10, MENU_ITEM_HEIGHT, DGRAY);*/
 
           y += MENU_ITEM_HEIGHT;
         }
@@ -229,4 +226,3 @@ void show_popup(const ibitmap* background, message_id message, message_id *items
 
   SetEventHandler(menu_handler);
 }
-

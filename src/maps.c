@@ -451,4 +451,3 @@ map_t four_bridges_map = {
     { 19, 14, 3 },
   }
 };
-

@@ -55,7 +55,7 @@ static void visit(struct ts_data *ts_data, int n)
     {
       void *mth_ptr = (char*)ts_data->array + m * ts_data->size;
       if (ts_data->has_edge(nth_ptr, mth_ptr))
-	visit(ts_data, m);
+        visit(ts_data, m);
     }
 
   memcpy((char*)ts_data->result + ts_data->result_count * ts_data->size, nth_ptr, ts_data->size);
@@ -84,4 +84,3 @@ void topological_sort(void *array, size_t nmemb, size_t size, int (*has_edge)(co
   free(ts_data.result);
   free(ts_data.visited);
 }
-

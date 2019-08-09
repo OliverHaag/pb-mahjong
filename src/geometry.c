@@ -46,4 +46,3 @@ int point_in_rect(int x, int y, const struct rect* r)
     (x >= r->x && x < r->x + r->w) &&
     (y >= r->y && y < r->y + r->h);
 }
-

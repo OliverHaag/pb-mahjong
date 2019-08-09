@@ -8,4 +8,3 @@ extern map_t difficult_map;
 extern map_t four_bridges_map;
 
 #endif
-

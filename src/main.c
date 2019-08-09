@@ -33,7 +33,7 @@ static int game_active = 0;
 
 extern const ibitmap background;
 
-#define HELP_HEIGHT (40)
+#define HELP_HEIGHT (60)
 
 static void menu_handler(int index);
 static void read_state(void);
@@ -129,8 +129,6 @@ static int fits(chip_t a, chip_t b)
 
 static void cell_rect(const position_t *pos, struct rect *r)
 {
-#define IMG_WIDTH (55)
-#define IMG_HEIGHT (79)
 
   const int screen_width = ScreenWidth();
   const int screen_height = ScreenHeight() - HELP_HEIGHT;
@@ -153,35 +151,12 @@ static void cell_rect(const position_t *pos, struct rect *r)
   offset_x = (screen_width - w * col_count) / 2;
   offset_y = (screen_height - h * row_count) / 2;
 
-  r->x = offset_x + pos->x * w + 4 * pos->k;
-  r->y = offset_y + pos->y * h + 4 * pos->k;
   r->w = 2 * w;
   r->h = 2 * h;
+  const int bw = r->w / 8;
+  r->x = offset_x + pos->x * w + bw * pos->k;
+  r->y = offset_y + pos->y * h + bw * pos->k;
 }
-
-/*static void draw_caret(const struct rect *r, int color)
-{
-  DrawRect(r->x + 2, r->y + 2, r->w - 4, r->h - 4, color);
-  DrawRect(r->x + 3, r->y + 3, r->w - 6, r->h - 6, color);
-  DrawRect(r->x + 4, r->y + 4, r->w - 8, r->h - 8, color);
-  DrawRect(r->x + 5, r->y + 5, r->w - 10, r->h - 10, color);
-  DrawRect(r->x + 6, r->y + 6, r->w - 12, r->h - 12, color);
-}*/
-
-
-#define BW 5
-
-#ifdef DGRAY
-#undef DGRAY
-#endif
-
-#define DGRAY 0x303030
-
-#ifdef LGRAY
-#undef LGRAY
-#endif
-
-#define LGRAY 0x707070
 
 static void draw_chip(const position_t *pos, chip_t chip)
 {
@@ -189,28 +164,23 @@ static void draw_chip(const position_t *pos, chip_t chip)
   struct rect r;
 
   cell_rect(pos, &r);
-  DrawRect(r.x - BW, r.y - BW, r.w, r.h, DGRAY);
+  const int bw = r.w / 8;
+  DrawRect(r.x - bw, r.y - bw, r.w, r.h, DGRAY);
 
-  for(i = 1; i < BW; ++i)
+  for(i = 1; i < bw; ++i)
     {
       DrawLine(r.x - i, r.y - i, r.x - i, r.y - i + r.h - 1, LGRAY);
       DrawLine(r.x - i, r.y - i, r.x - i + r.w - 1, r.y - i, LGRAY);
     }
 
-  DrawLine(r.x - BW, r.y - BW, r.x, r.y, DGRAY);
-  DrawLine(r.x - BW + r.w - 1, r.y - BW, r.x + r.w - 1, r.y, DGRAY);
-  DrawLine(r.x - BW, r.y - BW + r.h - 1, r.x, r.y + r.h - 1, DGRAY);
+  DrawLine(r.x - bw, r.y - bw, r.x, r.y, DGRAY);
+  DrawLine(r.x - bw + r.w - 1, r.y - bw, r.x + r.w - 1, r.y, DGRAY);
+  DrawLine(r.x - bw, r.y - bw + r.h - 1, r.x, r.y + r.h - 1, DGRAY);
 
   FillArea(r.x, r.y, r.w, r.h, WHITE);
   DrawRect(r.x, r.y, r.w, r.h, BLACK);
 
   StretchBitmap(r.x + 1, r.y + 1, r.w - 2, r.h - 2, (ibitmap*)bitmaps[chip], 0);
-
-  /*if (caret_pos >= 0 && caret_pos < g_selectable->count)
-  {
-    if (position_equal(pos, &g_selectable->positions[caret_pos]))
-    draw_caret(&r, DGRAY);
-  }*/
 
   if (selection_pos >= 0 && selection_pos < g_selectable->count)
     {
@@ -246,7 +216,7 @@ static ifont *g_help_font = NULL;
 static ifont *get_help_font(void)
 {
   if (g_help_font == NULL)
-    g_help_font = OpenFont(DEFAULTFONTB, 28, 1);
+    g_help_font = OpenFont(DEFAULTFONTB, 36, 1);
   return g_help_font;
 }
 
@@ -288,13 +258,14 @@ static void main_repaint(void)
     r.h = HELP_HEIGHT;
 
     DrawLine(r.x, r.y, r.x + r.w, r.y, BLACK);
-    FillArea(r.x, r.y + 2, r.w, r.h - 2, LGRAY);
+    DrawLine(r.x, r.y + 1, r.x + r.w, r.y + 1, LGRAY);
+    FillArea(r.x, r.y + 2, r.w, r.h - 2, DGRAY);
 
     SetFont(get_help_font(), WHITE);
 
     r.x += 10;
     r.w -= 20;
-    r.y += 2;
+    r.y += 8;
     r.h -= 2;
 
     {
@@ -318,108 +289,6 @@ static void main_repaint(void)
     DrawTextRect(r.x, r.y, r.w, r.h, (char*)get_message(MSG_HELP), ALIGN_FIT | ALIGN_RIGHT);
   }
 }
-
-/*static int move_left(void)
-{
-  if (caret_pos > 0)
-    --caret_pos;
-  else
-    caret_pos = g_selectable->count - 1;
-  return 1;
-}
-
-static int move_right(void)
-{
-  if (caret_pos < g_selectable->count - 1)
-    ++caret_pos;
-  else
-    caret_pos = 0;
-  return 1;
-}
-
-static int move_up(void)
-{
-  int i;
-  int min_dist = INT_MAX;
-  int new_pos = caret_pos;
-
-  const position_t *caret = &g_selectable->positions[caret_pos];
-  const int caret_row = (caret->y - 1) / 2;
-
-  for (i = 0; i < g_selectable->count; ++i)
-    if (i != caret_pos)
-      {
-        const position_t *pos = &g_selectable->positions[i];
-        int pos_row = (pos->y - 1) / 2;
-        if (caret_row <= pos_row)
-          pos_row -= MAX_COL_COUNT;
-
-        const int dist = abs(caret_row - pos_row) * MAX_COL_COUNT + abs(caret->x - pos->x);
-        if (dist < min_dist)
-          {
-            new_pos = i;
-            min_dist = dist;
-          }
-      }
-
-  if (new_pos != caret_pos)
-    {
-      caret_pos = new_pos;
-      return 1;
-    }
-  return 0;
-}
-
-static int move_down(void)
-{
-  int i;
-  int min_dist = INT_MAX;
-  int new_pos = caret_pos;
-
-  const position_t *caret = &g_selectable->positions[caret_pos];
-  const int caret_row = (caret->y - 1) / 2;
-
-  for (i = 0; i < g_selectable->count; ++i)
-    if (i != caret_pos)
-      {
-        const position_t *pos = &g_selectable->positions[i];
-        int pos_row = (pos->y - 1) / 2;
-        if (caret_row >= pos_row)
-          pos_row += MAX_COL_COUNT;
-
-        const int dist = abs(caret_row - pos_row) * MAX_COL_COUNT + abs(caret->x - pos->x);
-        if (dist < min_dist)
-          {
-            new_pos = i;
-            min_dist = dist;
-          }
-      }
-
-  if (new_pos != caret_pos)
-    {
-      caret_pos = new_pos;
-      return 1;
-    }
-  return 0;
-}
-
-static void generic_move(int (*move_func)(void))
-{
-  int prev_caret_pos = caret_pos;
-  if (move_func())
-    {
-      struct rect r1;
-      struct rect r2;
-      struct rect r;
-
-      main_repaint();
-      cell_rect(&g_selectable->positions[prev_caret_pos], &r1);
-      cell_rect(&g_selectable->positions[caret_pos], &r2);
-      union_rect(&r1, &r2, &r);
-
-      PartialUpdate(r.x, r.y, r.w, r.h);
-    }
-}*/
 
 static int finished(void)
 {
@@ -552,28 +421,6 @@ static int game_handler(int type, int par1, int par2)
     case EVT_KEYPRESS:
       switch (par1)
         {
-        /*case IV_KEY_OK:
-          select_cell();
-          break;
-
-        case IV_KEY_LEFT:
-          generic_move(move_left);
-          break;
-
-        case IV_KEY_RIGHT:
-          generic_move(move_right);
-          break;
-
-        case IV_KEY_UP:
-          generic_move(move_up);
-          break;
-
-        case IV_KEY_DOWN:
-          generic_move(move_down);
-          break;
-
-        case IV_KEY_PREV:
-        case IV_KEY_NEXT:*/
         case IV_KEY_MENU:
           {
             static message_id game_menu[] = {
@@ -824,6 +671,8 @@ static void read_state(void)
             current_language = ENGLISH;
           else if (!strcmp(value, "ru"))
             current_language = RUSSIAN;
+          else if (!strcmp(value, "de"))
+            current_language = GERMAN;
         }
       else if (!strcmp(key, "orientation"))
         {
@@ -941,4 +790,3 @@ int main(int argc, char **argv)
   InkViewMain(main_handler);
   return 0;
 }
-
