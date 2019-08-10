@@ -171,36 +171,36 @@ static void get_pile(chip_t pile[144])
   /**suits**/
   for (j = 0; j < 9; ++j)
     {
-      /*stones*/
-      for (i = 0; i < 4; ++i)
-        pile[c++] = 0x51 + j;
-      /*bamboos*/
-      for (i = 0; i < 4; ++i)
-        pile[c++] = 0x61 + j;
       /*characters*/
       for (i = 0; i < 4; ++i)
-        pile[c++] = 0x71 + j;
+        pile[c++] = 0x11 + j;
+      /*stones*/
+      for (i = 0; i < 4; ++i)
+        pile[c++] = 0x21 + j;
+      /*bamboos*/
+      for (i = 0; i < 4; ++i)
+        pile[c++] = 0x31 + j;
     }
   /**honors**/
   for (j = 0; j < 4; ++j)
     {
       /*winds*/
       for (i = 0; i < 4; ++i)
-        pile[c++] = 0x91 + j;
+        pile[c++] = 0x41 + j;
     }
   for (j = 0; j < 3; ++j)
     {
       /*dragons*/
       for (i = 0; i < 4; ++i)
-        pile[c++] = 0xA1 + j;
+        pile[c++] = 0x45 + j;
     }
   /**flowers**/
   /*plants*/
   for (j = 0; j < 4; ++j)
-    pile[c++] = 0xD1 + j;
+    pile[c++] = 0x51 + j;
   /*seasons*/
   for (j = 0; j < 4; ++j)
-    pile[c++] = 0xE1 + j;
+    pile[c++] = 0x55 + j;
 }
 
 static void clear_board(board_t *board)

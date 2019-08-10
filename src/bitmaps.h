@@ -1,8 +1,8 @@
 #ifndef BITMAPS_H
 #define BITMAPS_H
 
-#define IMG_WIDTH (55)
-#define IMG_HEIGHT (79)
+#define IMG_WIDTH (140)
+#define IMG_HEIGHT (200)
 
 void bitmaps_init(void);
 

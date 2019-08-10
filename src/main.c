@@ -116,10 +116,10 @@ static void init_map(map_t *map)
 
 static int fits(chip_t a, chip_t b)
 {
-  int category = a & 0xC0;
-  if (category == 0xC0) /*flowers*/
+  int category = a & 0xf0;
+  if (category == 0x50) /*flowers*/
     {
-      return (a & 0xF0) == (b & 0xF0);
+      return (a > 0x54) == (b > 0x54);
     }
   else
     {
