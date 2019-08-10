@@ -168,29 +168,37 @@ static void draw_chip(const position_t *pos, chip_t chip)
   /* Left/top side of the chip */
   for(i = 1; i < bw; ++i)
     {
-      DrawLine(r.x - i, r.y - i, r.x - i, r.y - i + r.h - 4, COLOR_SIDES);
-      DrawLine(r.x - i, r.y - i, r.x - i + r.w - 4, r.y - i, COLOR_SIDES);
+      DrawLine(r.x - i, r.y - i + 2, r.x - i, r.y - i + r.h - 4, COLOR_SIDES);
+      DrawLine(r.x - i + 2, r.y - i, r.x - i + r.w - 4, r.y - i, COLOR_SIDES);
     }
+  DrawPixel(r.x, r.y + 2, COLOR_SIDES);
+  DrawPixel(r.x + 2, r.y, COLOR_SIDES);
 
   /* Edges of the back */
-  DrawLine(r.x - bw + 3, r.y - bw, r.x + r.w - bw - 4, r.y - bw, COLOR_EDGES);
-  DrawPixel(r.x + r.w - bw - 3, r.y - bw + 1, COLOR_EDGES);
-  DrawLine(r.x - bw, r.y - bw + 3, r.x - bw, r.y + r.h - bw - 4, COLOR_EDGES);
-  DrawPixel(r.x - bw + 1, r.y + r.h - bw - 3, COLOR_EDGES);
+  DrawPixel(r.x + r.w - bw - 4, r.y - bw + 1, COLOR_DEDGES);
+  DrawLine(r.x - bw + 3, r.y - bw, r.x + r.w - bw - 5, r.y - bw, COLOR_DEDGES);
+  DrawPixel(r.x - bw + 2, r.y - bw + 1, COLOR_DEDGES);
+  DrawPixel(r.x - bw + 1, r.y - bw + 2, COLOR_DEDGES);
+  DrawLine(r.x - bw, r.y - bw + 3, r.x - bw, r.y + r.h - bw - 5, COLOR_DEDGES);
+  DrawPixel(r.x - bw + 1, r.y + r.h - bw - 4, COLOR_DEDGES);
 
   /* Edges of the sides */
-  DrawLine(r.x - bw + 2, r.y - bw + 2, r.x, r.y, COLOR_REFLECTION);
-  DrawLine(r.x - bw + 2, r.y - bw + 1, r.x + 1, r.y, COLOR_EDGES);
-  DrawLine(r.x - bw + 1, r.y - bw + 2, r.x, r.y + 1, COLOR_EDGES);
-  DrawLine(r.x + r.w - bw - 2, r.y - bw + 1, r.x + r.w - 4, r.y - 1, COLOR_EDGES);
-  DrawLine(r.x - bw + 1, r.y + r.h - bw - 2, r.x - 1, r.y + r.h - 4, COLOR_EDGES);
+  DrawLine(r.x - bw + 2, r.y - bw + 2, r.x + 1, r.y + 1, COLOR_LEDGES);
+  DrawLine(r.x - bw + 3, r.y - bw + 2, r.x + 1, r.y, COLOR_MEDGES);
+  DrawLine(r.x - bw + 2, r.y - bw + 3, r.x, r.y + 1, COLOR_MEDGES);
+  DrawLine(r.x + r.w - bw - 3, r.y - bw + 1, r.x + r.w - 5, r.y - 1, COLOR_DEDGES);
+  DrawLine(r.x - bw + 1, r.y + r.h - bw - 3, r.x - 1, r.y + r.h - 5, COLOR_DEDGES);
 
   /* Front */
-  FillArea(r.x + 1, r.y + 1, r.w - 2, r.h - 2, face);
-  DrawLine(r.x + 2, r.y, r.x + r.w - 3, r.y, COLOR_BORDER);
-  DrawLine(r.x + 2, r.y + r.h - 1, r.x + r.w - 3, r.y + r.h - 1, COLOR_BORDER);
-  DrawLine(r.x, r.y + 2, r.x, r.y + r.h - 3, COLOR_BORDER);
-  DrawLine(r.x + r.w - 1, r.y + 2, r.x + r.w - 1, r.y + r.h - 3, COLOR_BORDER);
+  FillArea(r.x + 2, r.y + 2, r.w - 4, r.h - 4, face);
+  DrawLine(r.x + 3, r.y + 1, r.x + r.w - 4, r.y + 1, face);
+  DrawLine(r.x + 3, r.y + r.h - 2, r.x + r.w - 4, r.y + r.h - 2, face);
+  DrawLine(r.x + 1, r.y + 3, r.x + 1, r.y + r.h - 4, face);
+  DrawLine(r.x + r.w - 2, r.y + 3, r.x + r.w - 2, r.y + r.h - 4, face);
+  DrawLine(r.x + 3, r.y, r.x + r.w - 4, r.y, COLOR_BORDER);
+  DrawLine(r.x + 3, r.y + r.h - 1, r.x + r.w - 4, r.y + r.h - 1, COLOR_BORDER);
+  DrawLine(r.x, r.y + 3, r.x, r.y + r.h - 4, COLOR_BORDER);
+  DrawLine(r.x + r.w - 1, r.y + 3, r.x + r.w - 1, r.y + r.h - 4, COLOR_BORDER);
   DrawLine(r.x + 2, r.y + 1, r.x + 1, r.y + 2, COLOR_BORDER);
   DrawLine(r.x + r.w - 3, r.y + 1, r.x + r.w - 2, r.y + 2, COLOR_BORDER);
   DrawLine(r.x + 2, r.y + r.h - 2, r.x + 1, r.y + r.h - 3, COLOR_BORDER);
