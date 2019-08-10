@@ -19,7 +19,7 @@ for path in g.getElementsByTagName('path'):
 
 with Image(blob=svg.toxml().encode('utf-8')) as image:
 	image.format = 'bmp'
-	image.background_color = Color('white')
+	image.background_color = Color('#eeeeee')
 	image.alpha_channel = 'remove'
 	with image.fx('sqrt((r^2+g^2+b^2)/3)') as grayscale:
 		grayscale.type = 'grayscale'

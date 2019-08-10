@@ -165,42 +165,42 @@ static int colorize(board_t *board, chip_t *pairs, int pile_size, board_t *resul
 
 static void get_pile(chip_t pile[144])
 {
-  int i, j;
-  int c = 0;
+  int rank, count;
+  int index = 0;
 
-  /**suits**/
-  for (j = 0; j < 9; ++j)
+  /**simples**/
+  for (rank = 1; rank <= 9; ++rank)
     {
       /*characters*/
-      for (i = 0; i < 4; ++i)
-        pile[c++] = 0x11 + j;
-      /*stones*/
-      for (i = 0; i < 4; ++i)
-        pile[c++] = 0x21 + j;
-      /*bamboos*/
-      for (i = 0; i < 4; ++i)
-        pile[c++] = 0x31 + j;
+      for (count = 0; count < 4; ++count)
+        pile[index++] = 0x10 | rank;
+      /*dots*/
+      for (count = 0; count < 4; ++count)
+        pile[index++] = 0x20 | rank;
+      /*bamboo*/
+      for (count = 0; count < 4; ++count)
+        pile[index++] = 0x30 | rank;
     }
   /**honors**/
-  for (j = 0; j < 4; ++j)
+  for (rank = 1; rank <= 4; ++rank)
     {
       /*winds*/
-      for (i = 0; i < 4; ++i)
-        pile[c++] = 0x41 + j;
+      for (count = 0; count < 4; ++count)
+        pile[index++] = 0x40 | rank;
     }
-  for (j = 0; j < 3; ++j)
+  for (rank = 1; rank <= 3; ++rank)
     {
       /*dragons*/
-      for (i = 0; i < 4; ++i)
-        pile[c++] = 0x45 + j;
+      for (count = 0; count < 4; ++count)
+        pile[index++] = 0x50 | rank;
     }
-  /**flowers**/
-  /*plants*/
-  for (j = 0; j < 4; ++j)
-    pile[c++] = 0x51 + j;
+  /**bonus**/
   /*seasons*/
-  for (j = 0; j < 4; ++j)
-    pile[c++] = 0x55 + j;
+  for (rank = 1; rank <= 4; ++rank)
+    pile[index++] = 0x60 | rank;
+  /*flowers*/
+  for (rank = 1; rank <= 4; ++rank)
+    pile[index++] = 0x70 | rank;
 }
 
 static void clear_board(board_t *board)
@@ -236,4 +236,17 @@ void generate_board(board_t *board, map_t *map)
   
   clear_board(board);
   colorize(&tmp, pile, 144, board);
+}
+
+int fits(chip_t a, chip_t b)
+{
+  int bonus = a & 0xe0;
+  if ((bonus & 0xe0) == 0x60) /*flowers and seasons*/
+    {
+      return (a & 0xf0) == (b & 0xf0);
+    }
+  else
+    {
+      return a == b;
+    }
 }

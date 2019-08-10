@@ -6,6 +6,15 @@
 #define SCREEN_WIDTH (ScreenWidth())
 #define SCREEN_HEIGHT (ScreenHeight())
 
+#define COLOR_FACE (0xffffff)
+#define COLOR_FLOWERS (0xbbbbbb)
+#define COLOR_SEASONS (0x777777)
+#define COLOR_SIDES (0xaaaaaa)
+#define COLOR_EDGES (0x555555)
+#define COLOR_REFLECTION (0xffffff)
+#define COLOR_BORDER (0x000000)
+
+
 static inline int min_int(int x, int y)
 {
   return x < y ? x : y;

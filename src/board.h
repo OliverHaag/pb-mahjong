@@ -2,8 +2,7 @@
 #define BOARD_H
 
 /*
-  category 2-bit
-  suit - 2-bit
+  category - 4-bit
   rank - 4-bit
 */
 typedef unsigned char chip_t;
@@ -48,5 +47,7 @@ typedef struct tag_map {
 } map_t;
 
 void generate_board(board_t *board, map_t *map);
+
+int fits(chip_t a, chip_t b);
 
 #endif

@@ -114,19 +114,6 @@ static void init_map(map_t *map)
   start_game();
 }
 
-static int fits(chip_t a, chip_t b)
-{
-  int category = a & 0xf0;
-  if (category == 0x50) /*flowers*/
-    {
-      return (a > 0x54) == (b > 0x54);
-    }
-  else
-    {
-      return a == b;
-    }
-}
-
 static void cell_rect(const position_t *pos, struct rect *r)
 {
 
@@ -137,15 +124,17 @@ static void cell_rect(const position_t *pos, struct rect *r)
 
   int w, h;
 
-  if (IMG_WIDTH * col_count * screen_height > screen_width * IMG_HEIGHT * row_count)
+  const int chip_width = IMG_WIDTH + 10;
+  const int chip_height = IMG_HEIGHT + 10;
+  if (chip_width * col_count * screen_height > screen_width * chip_height * row_count)
     {
       w = screen_width / col_count;
-      h = w * IMG_HEIGHT / IMG_WIDTH;
+      h = w * chip_height / chip_width;
     }
   else
     {
       h = screen_height / row_count;
-      w = h * IMG_WIDTH / IMG_HEIGHT;
+      w = h * chip_width / chip_height;
     }
 
   offset_x = (screen_width - w * col_count) / 2;
@@ -164,23 +153,50 @@ static void draw_chip(const position_t *pos, chip_t chip)
   struct rect r;
 
   cell_rect(pos, &r);
-  const int bw = r.w / 8;
-  DrawRect(r.x - bw, r.y - bw, r.w, r.h, DGRAY);
 
+  const int bw = r.w / 8;
+
+  int face = COLOR_FACE;
+  if((chip & 0xe0) == 0x60)
+  {
+    if((chip & 0xf0) == 0x60)
+      face = COLOR_SEASONS;
+    else
+      face = COLOR_FLOWERS;
+  }
+
+  /* Left/top side of the chip */
   for(i = 1; i < bw; ++i)
     {
-      DrawLine(r.x - i, r.y - i, r.x - i, r.y - i + r.h - 1, LGRAY);
-      DrawLine(r.x - i, r.y - i, r.x - i + r.w - 1, r.y - i, LGRAY);
+      DrawLine(r.x - i, r.y - i, r.x - i, r.y - i + r.h - 4, COLOR_SIDES);
+      DrawLine(r.x - i, r.y - i, r.x - i + r.w - 4, r.y - i, COLOR_SIDES);
     }
 
-  DrawLine(r.x - bw, r.y - bw, r.x, r.y, DGRAY);
-  DrawLine(r.x - bw + r.w - 1, r.y - bw, r.x + r.w - 1, r.y, DGRAY);
-  DrawLine(r.x - bw, r.y - bw + r.h - 1, r.x, r.y + r.h - 1, DGRAY);
+  /* Edges of the back */
+  DrawLine(r.x - bw + 3, r.y - bw, r.x + r.w - bw - 4, r.y - bw, COLOR_EDGES);
+  DrawPixel(r.x + r.w - bw - 3, r.y - bw + 1, COLOR_EDGES);
+  DrawLine(r.x - bw, r.y - bw + 3, r.x - bw, r.y + r.h - bw - 4, COLOR_EDGES);
+  DrawPixel(r.x - bw + 1, r.y + r.h - bw - 3, COLOR_EDGES);
 
-  FillArea(r.x, r.y, r.w, r.h, WHITE);
-  DrawRect(r.x, r.y, r.w, r.h, BLACK);
+  /* Edges of the sides */
+  DrawLine(r.x - bw + 2, r.y - bw + 2, r.x, r.y, COLOR_REFLECTION);
+  DrawLine(r.x - bw + 2, r.y - bw + 1, r.x + 1, r.y, COLOR_EDGES);
+  DrawLine(r.x - bw + 1, r.y - bw + 2, r.x, r.y + 1, COLOR_EDGES);
+  DrawLine(r.x + r.w - bw - 2, r.y - bw + 1, r.x + r.w - 4, r.y - 1, COLOR_EDGES);
+  DrawLine(r.x - bw + 1, r.y + r.h - bw - 2, r.x - 1, r.y + r.h - 4, COLOR_EDGES);
 
-  StretchBitmap(r.x + 1, r.y + 1, r.w - 2, r.h - 2, (ibitmap*)bitmaps[chip], 0);
+  /* Front */
+  FillArea(r.x + 1, r.y + 1, r.w - 2, r.h - 2, face);
+  DrawLine(r.x + 2, r.y, r.x + r.w - 3, r.y, COLOR_BORDER);
+  DrawLine(r.x + 2, r.y + r.h - 1, r.x + r.w - 3, r.y + r.h - 1, COLOR_BORDER);
+  DrawLine(r.x, r.y + 2, r.x, r.y + r.h - 3, COLOR_BORDER);
+  DrawLine(r.x + r.w - 1, r.y + 2, r.x + r.w - 1, r.y + r.h - 3, COLOR_BORDER);
+  DrawLine(r.x + 2, r.y + 1, r.x + 1, r.y + 2, COLOR_BORDER);
+  DrawLine(r.x + r.w - 3, r.y + 1, r.x + r.w - 2, r.y + 2, COLOR_BORDER);
+  DrawLine(r.x + 2, r.y + r.h - 2, r.x + 1, r.y + r.h - 3, COLOR_BORDER);
+  DrawLine(r.x + r.w - 3, r.y + r.h - 2, r.x + r.w - 2, r.y + r.h - 3, COLOR_BORDER);
+
+  StretchBitmap(r.x + 5, r.y + 5, r.w - 10, r.h - 10, (ibitmap*)bitmaps[chip], 0);
 
   if (selection_pos >= 0 && selection_pos < g_selectable->count)
     {
@@ -337,20 +353,31 @@ static void select_cell(void)
       return;
     }
 
-  const chip_t chip1 = selection_pos >= 0 ? board_get(&g_board, &g_selectable->positions[selection_pos]) : 0;
-  const chip_t chip2 = board_get(&g_board, &g_selectable->positions[caret_pos]);
+  position_t *position1 = NULL;
+  chip_t chip1 = 0;
+  struct rect r1;
+  if(selection_pos >= 0)
+    {
+      position1 = &g_selectable->positions[selection_pos];
+      chip1 = board_get(&g_board, position1);
+      cell_rect(position1, &r1);
+    }
+  position_t *position2 = &g_selectable->positions[caret_pos];
+  chip_t chip2 = board_get(&g_board, position2);
+  struct rect r2;
+  cell_rect(position2, &r2);
 
   if (chip1 != 0 && fits(chip1, chip2))
     {
-      undo_stack.positions[undo_stack.count] = g_selectable->positions[selection_pos];
+      undo_stack.positions[undo_stack.count] = *position1;
       undo_stack.chips[undo_stack.count] = chip1;
       ++undo_stack.count;
-      undo_stack.positions[undo_stack.count] = g_selectable->positions[caret_pos];
+      undo_stack.positions[undo_stack.count] = *position2;
       undo_stack.chips[undo_stack.count] = chip2;
       ++undo_stack.count;
 
-      board_set(&g_board, &g_selectable->positions[selection_pos], 0);
-      board_set(&g_board, &g_selectable->positions[caret_pos], 0);
+      board_set(&g_board, position1, 0);
+      board_set(&g_board, position2, 0);
 
       selection_pos = -1;
 
@@ -383,30 +410,31 @@ static void select_cell(void)
       else
         {
           main_repaint();
-          FullUpdate();
+
+          struct rect r;
+          union_rect(&r1, &r2, &r);
+          const int bw = r1.w / 8;
+          PartialUpdate(r.x - bw, r.y - bw, r.w + bw, r.h + bw);
         }
     }
   else
     {
-      struct rect r;
       int prev_selection_pos = selection_pos;
 
       selection_pos = caret_pos;
       main_repaint();
 
-      cell_rect(&g_selectable->positions[selection_pos], &r);
-
       if (prev_selection_pos != -1)
         {
-          struct rect r1;
-          struct rect r2;
+          struct rect r;
 
-          r1 = r;
-          cell_rect(&g_selectable->positions[prev_selection_pos], &r2);
           union_rect(&r1, &r2, &r);
+          PartialUpdate(r.x, r.y, r.w, r.h);
         }
-
-      PartialUpdate(r.x, r.y, r.w, r.h);
+      else
+        {
+          PartialUpdate(r2.x, r2.y, r2.w, r2.h);
+        }
     }
 }
 
@@ -631,7 +659,7 @@ static int main_handler(int type, int par1, int par2)
         main_menu = main_menu_w_load;
       else
         main_menu = main_menu_wo_load;
-      
+
       show_popup(&background, MSG_NONE, main_menu, menu_handler);
       break;
     case EVT_EXIT:

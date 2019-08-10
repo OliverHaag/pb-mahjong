@@ -14,7 +14,8 @@ foreach(CHIP_SVG_FILE ${CHIP_SVG_FILES})
 	list(APPEND CHIP_BMP_FILES ${CHIP_BMP_FILE})
 	add_custom_command(
 		OUTPUT ${CHIP_BMP_FILE}
-		COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/images/convert_chip.py ${CHIP_SVG_FILE} ${CHIP_BMP_FILE})
+		COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/images/convert_chip.py ${CHIP_SVG_FILE} ${CHIP_BMP_FILE}
+		DEPENDS ${CMAKE_SOURCE_DIR}/images/convert_chip.py ${CHIP_SVG_FILE})
 endforeach()
 
 add_custom_command(
