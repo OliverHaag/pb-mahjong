@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 2.6.0)
 set(TOOLCHAIN_PATH ${CMAKE_FIND_ROOT_PATH}/../..)
 
 find_package(Freetype REQUIRED)
-#find_package(Python3 COMPONENTS Interpreter REQUIRED)
-set(Python3_EXECUTABLE /usr/bin/python3)
+set(Python_ADDITIONAL_VERSIONS 3)
+find_package(PythonInterp REQUIRED)
 
 file(GLOB CHIP_SVG_FILES ${CMAKE_SOURCE_DIR}/images/chip_*.svg)
 foreach(CHIP_SVG_FILE ${CHIP_SVG_FILES})
