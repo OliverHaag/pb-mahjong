@@ -1,3 +1,4 @@
+#include <dirent.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -19,6 +20,8 @@
 #endif
 
 #define SAVED_GAME_PATH (STATEPATH "/pb-mahjong.saved-game")
+#define MAPS_DIR (CONFIGPATH "/pb-mahjong")
+#define MAPS_EXT ".map"
 
 static int orientation = ROTATE270;
 static board_t g_board;
@@ -30,16 +33,23 @@ static positions_t *g_selectable = NULL;
 static int help_index = 0;
 static int help_offset = 0;
 static int game_active = 0;
+static char **map_list;
+static int map_list_size;
 
 extern const ibitmap background;
 
 #define HELP_HEIGHT (60)
 
+static int game_handler(int type, int par1, int par2);
 static void menu_handler(int index);
+static void load_map_handler(int index);
+static int main_handler(int type, int par1, int par2);
 static void read_state(void);
 static void write_state(void);
 static int load_game(void);
 static void save_game(void);
+static void scan_maps(const char *directory);
+static map_t *load_map(const char *name);
 
 static struct
 {
@@ -398,6 +408,7 @@ static void select_cell(void)
         MSG_NEW_GAME_EASY,
         MSG_NEW_GAME_DIFFICULT,
         MSG_NEW_GAME_FOUR_BRIDGES,
+        MSG_NEW_GAME_CUSTOM,
         MSG_SEPARATOR,
         MSG_EXIT,
         MSG_NONE
@@ -406,12 +417,14 @@ static void select_cell(void)
       if (finished())
         {
           game_active = 0;
+          load_map(NULL);
           clear_undo_stack();
           show_popup(&background, MSG_WIN, finish_menu, menu_handler);
         }
       else if (!pair_exists(&g_board))
         {
           game_active = 0;
+          load_map(NULL);
           clear_undo_stack();
           show_popup(&background, MSG_LOSE, finish_menu, menu_handler);
         }
@@ -463,6 +476,7 @@ static int game_handler(int type, int par1, int par2)
               MSG_NEW_GAME_EASY,
               MSG_NEW_GAME_DIFFICULT,
               MSG_NEW_GAME_FOUR_BRIDGES,
+              MSG_NEW_GAME_CUSTOM,
               MSG_SEPARATOR,
               MSG_EXIT,
               MSG_NONE
@@ -476,6 +490,7 @@ static int game_handler(int type, int par1, int par2)
               MSG_NEW_GAME_EASY,
               MSG_NEW_GAME_DIFFICULT,
               MSG_NEW_GAME_FOUR_BRIDGES,
+              MSG_NEW_GAME_CUSTOM,
               MSG_SEPARATOR,
               MSG_EXIT,
               MSG_NONE
@@ -554,6 +569,7 @@ static message_id main_menu_wo_load[] = {
   MSG_NEW_GAME_EASY,
   MSG_NEW_GAME_DIFFICULT,
   MSG_NEW_GAME_FOUR_BRIDGES,
+  MSG_NEW_GAME_CUSTOM,
   MSG_SEPARATOR,
   MSG_TOGGLE_LANGUAGE,
   MSG_CHANGE_ORIENTATION,
@@ -566,6 +582,7 @@ static message_id main_menu_w_load[] = {
   MSG_NEW_GAME_EASY,
   MSG_NEW_GAME_DIFFICULT,
   MSG_NEW_GAME_FOUR_BRIDGES,
+  MSG_NEW_GAME_CUSTOM,
   MSG_SEPARATOR,
   MSG_LOAD,
   MSG_SEPARATOR,
@@ -611,6 +628,10 @@ static void menu_handler(int index)
       SetEventHandler(game_handler);
       break;
 
+    case MSG_NEW_GAME_CUSTOM:
+      show_popup_list(&background, MSG_NONE, map_list, load_map_handler);
+      break;
+
     case MSG_LOAD:
       if (load_game())
         {
@@ -650,6 +671,27 @@ static void menu_handler(int index)
     }
 }
 
+static void load_map_handler(int index)
+{
+  if(index >= 0 && index <= map_list_size)
+    {
+      map_t *map = load_map(map_list[index]);
+      if(map != NULL)
+        {
+          init_map(map);
+          SetEventHandler(game_handler);
+        }
+      else
+        {
+          show_popup_list(&background, MSG_LOADING_FAILED, map_list, load_map_handler);
+        }
+    }
+  else
+    {
+      show_popup(&background, MSG_NONE, main_menu, menu_handler);
+    }
+}
+
 static int main_handler(int type, int par1, int par2)
 {
   switch (type)
@@ -664,6 +706,7 @@ static int main_handler(int type, int par1, int par2)
         main_menu = main_menu_w_load;
       else
         main_menu = main_menu_wo_load;
+      scan_maps(MAPS_DIR);
 
       show_popup(&background, MSG_NONE, main_menu, menu_handler);
       break;
@@ -816,6 +859,102 @@ static void save_game(void)
             undo_stack.chips[i]);
 
   fclose(f);
+}
+
+static void scan_maps(const char *directory)
+{
+  map_list_size = 0;
+  DIR *dir;
+  struct dirent *entry;
+  dir = opendir(directory);
+  if(dir)
+    {
+      while((entry = readdir(dir)) != NULL)
+        {
+          int len = strlen(entry->d_name) - strlen(MAPS_EXT);
+          if(len > 0 && strcmp(entry->d_name + len, MAPS_EXT) == 0)
+            ++map_list_size;
+        }
+      map_list = (char **) malloc(sizeof(char *) * (map_list_size + 1));
+      rewinddir(dir);
+      int index = 0;
+      while((entry = readdir(dir)) != NULL && index < map_list_size)
+        {
+          int len = strlen(entry->d_name) - strlen(MAPS_EXT);
+          if(len > 0 && strcmp(entry->d_name + len, MAPS_EXT) == 0)
+            {
+              map_list[index] = (char *) malloc(len + 1);
+              strncpy(map_list[index], entry->d_name, len);
+              map_list[len] = 0;
+              ++index;
+            }
+        }
+      map_list[index] = NULL;
+      closedir(dir);
+    }
+}
+
+static map_t *load_map(const char *name)
+{
+  static map_t *loaded_map;
+  static char *loaded_name;
+
+  if(loaded_name != NULL)
+    {
+      free(loaded_name);
+      loaded_name = NULL;
+    }
+  if(name != NULL)
+    {
+      if(loaded_map == NULL)
+        loaded_map = (map_t *) malloc(sizeof(map_t));
+      memset(loaded_map, 0, sizeof(map_t));
+
+      char path[256];
+      sprintf(path, "%s/%s.map", MAPS_DIR, name);
+      FILE *f = fopen(path, "r");
+      if(!f)
+        return NULL;
+
+      int col_count = 32;
+      int row_count = 18;
+      if(fscanf(f, "%d %d\n", &col_count, &row_count) == EOF ||
+         col_count < 0 || col_count >= MAX_COL_COUNT ||
+         row_count < 0 || row_count >= MAX_ROW_COUNT)
+        return NULL;
+      loaded_map->col_count = col_count;
+      loaded_map->row_count = row_count;
+
+      unsigned int pos;
+      for(pos = 0; pos < CHIP_COUNT; ++pos)
+        {
+          int x = 0, y = 0, z = 0;
+          if(fscanf(f, "%d %d %d\n", &x, &y, &z) == EOF ||
+             x < 0 || x >= col_count ||
+             y < 0 || y >= row_count ||
+             z < 0 || z >= MAX_HEIGHT)
+            return NULL;
+          loaded_map->map[pos].x = x;
+          loaded_map->map[pos].y = y;
+          loaded_map->map[pos].z = z;
+        }
+
+      fclose(f);
+
+      loaded_name = (char *) malloc(strlen(name) + 1);
+      strcpy(loaded_name, name);
+      loaded_map->name = loaded_name;
+    }
+  else
+    {
+      if(loaded_map != NULL)
+        {
+          free(loaded_map);
+          loaded_map = NULL;
+        }
+    }
+
+  return loaded_map;
 }
 
 int main(int argc, char **argv)

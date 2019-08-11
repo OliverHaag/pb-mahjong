@@ -7,9 +7,10 @@
 */
 typedef unsigned char chip_t;
 
-#define MAX_ROW_COUNT 18
-#define MAX_COL_COUNT 32
+#define MAX_ROW_COUNT 24
+#define MAX_COL_COUNT 40
 #define MAX_HEIGHT 16
+#define CHIP_COUNT 144
 
 typedef struct {
   chip_t chips[MAX_HEIGHT];
@@ -26,7 +27,7 @@ typedef struct {
 int position_equal(const position_t *pos1, const position_t *pos2);
 
 typedef struct {
-  position_t positions[144];
+  position_t positions[CHIP_COUNT];
   int count;
 } positions_t;
 
@@ -38,12 +39,12 @@ void board_set(board_t *board, const position_t *pos, chip_t chip);
 /*******************************************************/
 
 typedef struct tag_map {
-  const char *name;
+  char *name;
   int row_count;
   int col_count;
   struct {
     int x, y, z;
-  } map[144];
+  } map[CHIP_COUNT];
 } map_t;
 
 void generate_board(board_t *board, map_t *map);

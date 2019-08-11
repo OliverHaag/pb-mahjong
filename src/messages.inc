@@ -13,10 +13,25 @@ MESSAGE(NEW_GAME_FOUR_BRIDGES,
 	"Новая игра (Четыре моста)",
 	"Neues Spiel (Vier Brücken)")
 
+MESSAGE(NEW_GAME_CUSTOM,
+	"New game (Custom)",
+	"Новая игра (Личный)",
+	"Neues Spiel (Eigene)")
+
 MESSAGE(LOAD,
 	"Load game",
 	"Загрузить игру",
 	"Spiel laden")
+
+MESSAGE(BACK,
+	"Back",
+	"Назад",
+	"Zurück")
+
+MESSAGE(LOADING_FAILED,
+	"Couldn't load map",
+	"Не удалось загрузить карту",
+	"Laden der Karte fehlgeschlagen")
 
 MESSAGE(EXIT,
 	"Exit",

@@ -13,6 +13,7 @@ typedef struct {
   message_id message;
 
   message_id *items;
+  char **list;
   int count;
   iv_menuhandler proc;
   int current;
@@ -40,19 +41,40 @@ void menu_calc(menu_t *menu)
   int i;
   menu->bounds.w = 0;
   menu->bounds.h = 0;
-  for (i = 0; i < menu->count; ++i)
+  if(menu->items != NULL)
     {
-      if (menu->items[i] > MSG_NONE)
+      for (i = 0; i < menu->count; ++i)
         {
-          const int lw = StringWidth((char*)get_message(menu->items[i]));
-          if (lw > menu->bounds.w)
-            menu->bounds.w = lw;
-          menu->bounds.h += MENU_ITEM_HEIGHT;
+          if (menu->items[i] > MSG_NONE)
+            {
+              const int lw = StringWidth((char*)get_message(menu->items[i]));
+              if (lw > menu->bounds.w)
+                menu->bounds.w = lw;
+              menu->bounds.h += MENU_ITEM_HEIGHT;
+            }
+          else /*separator*/
+            {
+              menu->bounds.h += MENU_SEPARATOR_HEIGHT;
+            }
         }
-      else /*separator*/
+    }
+  else if(menu->list != NULL)
+    {
+      for (i = 0; i < menu->count; ++i)
         {
-          menu->bounds.h += MENU_SEPARATOR_HEIGHT;
+          if (menu->list[i] != NULL)
+            {
+              const int lw = StringWidth(menu->list[i]);
+              if (lw > menu->bounds.w)
+                menu->bounds.w = lw;
+              menu->bounds.h += MENU_ITEM_HEIGHT;
+            }
+          else /*separator*/
+            {
+              menu->bounds.h += MENU_SEPARATOR_HEIGHT;
+            }
         }
+      menu->bounds.h += MENU_SEPARATOR_HEIGHT + MENU_ITEM_HEIGHT;
     }
 
   menu->bounds.x = (ScreenWidth() - menu->bounds.w - 2 * MENU_MARGIN) / 2 + MENU_MARGIN;
@@ -79,25 +101,60 @@ static void draw_popup(menu_t *menu)
            BLACK);
 
   y = menu->bounds.y;
-  for (i = 0; i < menu->count; ++i)
+  if(menu->items != NULL)
     {
-      if (menu->items[i] > MSG_NONE)
+      for (i = 0; i < menu->count; ++i)
         {
-          DrawTextRect(menu->bounds.x,
-                       y,
-                       menu->bounds.w,
-                       MENU_ITEM_HEIGHT,
-                       (char*)get_message(menu->items[i]),
-                       ALIGN_LEFT | VALIGN_MIDDLE);
+          if (menu->items[i] > MSG_NONE)
+            {
+              DrawTextRect(menu->bounds.x,
+                           y,
+                           menu->bounds.w,
+                           MENU_ITEM_HEIGHT,
+                           (char*)get_message(menu->items[i]),
+                           ALIGN_LEFT | VALIGN_MIDDLE);
 
-          y += MENU_ITEM_HEIGHT;
+              y += MENU_ITEM_HEIGHT;
+            }
+          else /*separator*/
+            {
+              const int sy = y + MENU_SEPARATOR_HEIGHT / 2;
+              DrawLine(menu->bounds.x, sy, menu->bounds.x + menu->bounds.w, sy, BLACK);
+              y += MENU_SEPARATOR_HEIGHT;
+            }
         }
-      else /*separator*/
+    }
+  else if(menu->list != NULL)
+    {
+      for (i = 0; i < menu->count; ++i)
         {
-          const int sy = y + MENU_SEPARATOR_HEIGHT / 2;
-          DrawLine(menu->bounds.x, sy, menu->bounds.x + menu->bounds.w, sy, BLACK);
-          y += MENU_SEPARATOR_HEIGHT;
+          if (menu->list[i] != NULL)
+            {
+              DrawTextRect(menu->bounds.x,
+                           y,
+                           menu->bounds.w,
+                           MENU_ITEM_HEIGHT,
+                           menu->list[i],
+                           ALIGN_LEFT | VALIGN_MIDDLE);
+
+              y += MENU_ITEM_HEIGHT;
+            }
+          else /*separator*/
+            {
+              const int sy = y + MENU_SEPARATOR_HEIGHT / 2;
+              DrawLine(menu->bounds.x, sy, menu->bounds.x + menu->bounds.w, sy, BLACK);
+              y += MENU_SEPARATOR_HEIGHT;
+            }
         }
+        const int sy = y + MENU_SEPARATOR_HEIGHT / 2;
+        DrawLine(menu->bounds.x, sy, menu->bounds.x + menu->bounds.w, sy, BLACK);
+        y += MENU_SEPARATOR_HEIGHT;
+        DrawTextRect(menu->bounds.x,
+                     y,
+                     menu->bounds.w,
+                     MENU_ITEM_HEIGHT,
+                     (char *)get_message(MSG_BACK),
+                     ALIGN_LEFT | VALIGN_MIDDLE);
     }
 }
 
@@ -146,27 +203,52 @@ static int menu_handler(int type, int par1, int par2)
       switch (par1)
         {
         case IV_KEY_UP:
-          do
+          if(menu->items != NULL)
             {
-              menu->current = (menu->current + menu->count - 1) % menu->count;
+              do
+                {
+                  menu->current = (menu->current + menu->count - 1) % menu->count;
+                }
+              while (menu->items[menu->current] <= MSG_NONE);
             }
-          while (menu->items[menu->current] <= MSG_NONE);
+          else if(menu->list != NULL)
+            {
+              do
+                {
+                  menu->current = (menu->current + menu->count - 1) % menu->count;
+                }
+              while (menu->list[menu->current] == NULL);
+            }
 
           draw_popup(menu);
           menu_update(menu);
           break;
         case IV_KEY_DOWN:
-          do
+          if(menu->items != NULL)
             {
-              menu->current = (menu->current + 1) % menu->count;
+              do
+                {
+                  menu->current = (menu->current + 1) % menu->count;
+                }
+              while (menu->items[menu->current] <= MSG_NONE);
             }
-          while (menu->items[menu->current] <= MSG_NONE);
+          else if(menu->list != NULL)
+            {
+              do
+                {
+                  menu->current = (menu->current + 1) % menu->count;
+                }
+              while (menu->list[menu->current] == NULL);
+            }
 
           draw_popup(menu);
           menu_update(menu);
           break;
         case IV_KEY_OK:
-          menu->proc(menu->items[menu->current]);
+          if(menu->items != NULL)
+            menu->proc(menu->items[menu->current]);
+          else if(menu->list != NULL)
+            menu->proc(menu->current);
           break;
         }
       break;
@@ -181,29 +263,65 @@ static int menu_handler(int type, int par1, int par2)
           {
             int y = menu->bounds.y;
             int i;
-            for (i = 0; i < menu->count; ++i)
+            if(menu->items != NULL)
               {
-                if (menu->items[i] > MSG_NONE)
+                for (i = 0; i < menu->count; ++i)
                   {
+                    if (menu->items[i] > MSG_NONE)
+                      {
+                        if (ry >= y && ry < y + MENU_ITEM_HEIGHT)
+                          {
+                            menu->current = i;
+                            draw_popup(menu);
+                            menu_update(menu);
+                            menu->proc(menu->items[menu->current]);
+                            break;
+                          }
+
+                        y += MENU_ITEM_HEIGHT;
+                      }
+                    else /*separator*/
+                      {
+                        y += MENU_SEPARATOR_HEIGHT;
+                      }
+                  }
+              }
+            else if(menu->list != NULL)
+              {
+                for (i = 0; i < menu->count; ++i)
+                  {
+                    if (menu->list[i] != NULL)
+                      {
+                        if (ry >= y && ry < y + MENU_ITEM_HEIGHT)
+                          {
+                            menu->current = i;
+                            draw_popup(menu);
+                            menu_update(menu);
+                            menu->proc(menu->current);
+                            break;
+                          }
+
+                        y += MENU_ITEM_HEIGHT;
+                      }
+                    else /*separator*/
+                      {
+                        y += MENU_SEPARATOR_HEIGHT;
+                      }
+                  }
+                /* Back item */
+                if (i >= menu->count)
+                  {
+                    y += MENU_SEPARATOR_HEIGHT;
                     if (ry >= y && ry < y + MENU_ITEM_HEIGHT)
                       {
                         menu->current = i;
                         draw_popup(menu);
                         menu_update(menu);
-                        menu->proc(menu->items[menu->current]);
-                        goto done;
+                        menu->proc(-1);
                       }
-
-                    y += MENU_ITEM_HEIGHT;
-                  }
-                else /*separator*/
-                  {
-                    y += MENU_SEPARATOR_HEIGHT;
                   }
               }
           }
-      done:
-        ;
       }
       break;
     }
@@ -218,8 +336,27 @@ void show_popup(const ibitmap* background, message_id message, message_id *items
   menu->background = background;
   menu->message = message;
   menu->items = items;
+  menu->list = NULL;
   menu->count = 0;
   while (items[menu->count] != MSG_NONE)
+    ++menu->count;
+  menu->proc = hproc;
+  menu->current = 0;
+
+  SetEventHandler(menu_handler);
+}
+
+void show_popup_list(const ibitmap* background, message_id message, char **list, iv_menuhandler hproc)
+{
+  menu_t *menu = &g_menu1;
+
+  menu->calc_required = 1;
+  menu->background = background;
+  menu->message = message;
+  menu->items = NULL;
+  menu->list = list;
+  menu->count = 0;
+  while (list[menu->count] != NULL)
     ++menu->count;
   menu->proc = hproc;
   menu->current = 0;
