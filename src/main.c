@@ -419,10 +419,15 @@ static void select_cell(void)
         {
           main_repaint();
 
-          struct rect r;
-          union_rect(&r1, &r2, &r);
           const int bw = r1.w / 8;
-          PartialUpdate(r.x - bw, r.y - bw, r.w + bw, r.h + bw);
+          PartialUpdate(r1.x - bw, r1.y - bw, r1.w + bw, r1.h + bw);
+          PartialUpdate(r2.x - bw, r2.y - bw, r2.w + bw, r2.h + bw);
+          struct rect r;
+          r.x = 0;
+          r.y = ScreenHeight() - HELP_HEIGHT;
+          r.w = ScreenWidth();
+          r.h = HELP_HEIGHT;
+          PartialUpdate(r.x, r.y, r.w, r.h);
         }
     }
   else
@@ -433,16 +438,8 @@ static void select_cell(void)
       main_repaint();
 
       if (prev_selection_pos != -1)
-        {
-          struct rect r;
-
-          union_rect(&r1, &r2, &r);
-          PartialUpdate(r.x, r.y, r.w, r.h);
-        }
-      else
-        {
-          PartialUpdate(r2.x, r2.y, r2.w, r2.h);
-        }
+        PartialUpdate(r1.x, r1.y, r1.w, r1.h);
+      PartialUpdate(r2.x, r2.y, r2.w, r2.h);
     }
 }
 
