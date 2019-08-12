@@ -6,6 +6,6 @@
 
 void bitmaps_init(void);
 
-extern const ibitmap* bitmaps[256];
+extern const ibitmap *bitmaps[256];
 
 #endif

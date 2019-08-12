@@ -2,7 +2,7 @@
 #define GEOMETRY_H
 
 struct rect {
-  int x, y, w, h;
+	int x, y, w, h;
 };
 
 void point_change_orientation(int x, int y, int orientation, int *rx, int *ry);

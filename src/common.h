@@ -17,12 +17,12 @@
 
 static inline int min_int(int x, int y)
 {
-  return x < y ? x : y;
+	return x < y ? x : y;
 }
 
 static inline int max_int(int x, int y)
 {
-  return x > y ? x : y;
+	return x > y ? x : y;
 }
 
 int rrand(int m);
