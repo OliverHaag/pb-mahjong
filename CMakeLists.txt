@@ -1,9 +1,12 @@
 project(pb-mahjong)
 cmake_minimum_required(VERSION 2.6.0)
 
-set(TOOLCHAIN_PATH ${CMAKE_FIND_ROOT_PATH}/../..)
+get_filename_component(TOOLCHAIN_PATH ${CMAKE_TOOLCHAIN_FILE} DIRECTORY)
+get_filename_component(TOOLCHAIN_PATH ${TOOLCHAIN_PATH} DIRECTORY)
+get_filename_component(TOOLCHAIN_PATH ${TOOLCHAIN_PATH} DIRECTORY)
 
 find_package(Freetype REQUIRED)
+find_package(Inkview REQUIRED)
 set(Python_ADDITIONAL_VERSIONS 3)
 find_package(PythonInterp REQUIRED)
 
@@ -20,11 +23,11 @@ endforeach()
 
 add_custom_command(
 	OUTPUT ${CMAKE_SOURCE_DIR}/images/background.c
-	COMMAND ${TOOLCHAIN_PATH}/bin/pbres -c ${CMAKE_SOURCE_DIR}/images/background.c -2 ${CMAKE_SOURCE_DIR}/images/background.bmp
+	COMMAND ${TOOLCHAIN_PATH}/usr/bin/pbres -c ${CMAKE_SOURCE_DIR}/images/background.c -2 ${CMAKE_SOURCE_DIR}/images/background.bmp
 	DEPENDS ${CMAKE_SOURCE_DIR}/images/background.bmp)
 add_custom_command(
 	OUTPUT ${CMAKE_SOURCE_DIR}/images/chip.c
-	COMMAND ${TOOLCHAIN_PATH}/bin/pbres -c ${CMAKE_SOURCE_DIR}/images/chip.c -4 ${CMAKE_SOURCE_DIR}/images/chip_*.bmp
+	COMMAND ${TOOLCHAIN_PATH}/usr/bin/pbres -c ${CMAKE_SOURCE_DIR}/images/chip.c -4 ${CMAKE_SOURCE_DIR}/images/chip_*.bmp
 	DEPENDS ${CHIP_BMP_FILES})
 add_executable(pb-mahjong.app
 	${CMAKE_SOURCE_DIR}/src/bitmaps.c
@@ -38,7 +41,7 @@ add_executable(pb-mahjong.app
 	${CMAKE_SOURCE_DIR}/images/background.c
 	${CMAKE_SOURCE_DIR}/images/chip.c)
 
-include_directories(${CMAKE_SOURCE_DIR}/src ${FREETYPE_INCLUDE_DIRS})
-target_link_libraries(pb-mahjong.app pthread inkview freetype)
+include_directories(${CMAKE_SOURCE_DIR}/src ${FREETYPE_INCLUDE_DIRS} ${INKVIEW_INCLUDE_DIR})
+target_link_libraries(pb-mahjong.app ${FREETYPE_LIBRARIES} ${INKVIEW_LIBRARIES})
 
 install(TARGETS pb-mahjong.app DESTINATION bin)
