@@ -1,8 +1,22 @@
+# CMake
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+# Editor temporaries
 *~
-*.exe
+
+# Build output
 /pb-mahjong
 /pb-mahjong.app
-/system
 /pb-mahjong.saved-game
-/images-temp.c
-
+/images/*.c
+/images/chip_*.bmp
