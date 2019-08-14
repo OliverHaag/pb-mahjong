@@ -20,3 +20,4 @@ _deps
 /pb-mahjong.saved-game
 /images/*.c
 /images/chip_*.bmp
+/install
