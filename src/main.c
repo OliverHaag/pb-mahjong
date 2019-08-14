@@ -90,6 +90,7 @@ static void undo()
 		board_set( &g_board, &undo_stack.positions[undo_stack.count - 1], undo_stack.chips[undo_stack.count - 1]);
 		--undo_stack.count;
 	}
+	g_board.chip_count += 2;
 
 	selection_pos = -1;
 	rebuild_selectables();
@@ -151,8 +152,8 @@ static void cell_rect(const position_t *pos, struct rect *r)
 	r->w = 2 * w;
 	r->h = 2 * h;
 	const int bw = r->w / 8;
-	r->x = offset_x + pos->x * w + bw * pos->k;
-	r->y = offset_y + pos->y * h + bw * pos->k;
+	r->x = offset_x + pos->x * w + bw * pos->z;
+	r->y = offset_y + pos->y * h + bw * pos->z;
 }
 
 static void draw_chip(const position_t *pos, chip_t chip)
@@ -164,36 +165,55 @@ static void draw_chip(const position_t *pos, chip_t chip)
 
 	const int bw = r.w / 8;
 
-	int face = COLOR_FACE;
-	if((chip & 0xe0) == 0x60) {
-		if((chip & 0xf0) == 0x60)
-			face = COLOR_SEASONS;
-		else
-			face = COLOR_FLOWERS;
+	/* Standard chips */
+	int face = 0xffffff;
+	int sides = 0xaaaaaa;
+	int darkedges = 0x333333;
+	int mediumedges = 0x777777;
+	int lightedges = 0xffffff;
+	int border = 0x000000;
+
+	/* Blockers */
+	if((chip & CHIP_CATEGORY_MASK) == CHIP_CATEGORY_BLOCK) {
+		face = 0x555555;
+		sides = 0x444444;
+		darkedges = 0x111111;
+		mediumedges = 0x222222;
+		lightedges = 0x666666;
+		border = 0x111111;
+	}
+	/* Bonus */
+	else {
+		if((chip & CHIP_CATEGORY2_MASK) == CHIP_CATEGORY2_BONUS) {
+			if((chip & CHIP_CATEGORY_MASK) == CHIP_CATEGORY_SEASONS)
+				face = 0x777777;
+			else
+				face = 0xbbbbbb;
+		}
 	}
 
 	/* Left/top side of the chip */
 	for(i = 1; i < bw; ++i) {
-		DrawLine(r.x - i, r.y - i + 2, r.x - i, r.y - i + r.h - 4, COLOR_SIDES);
-		DrawLine(r.x - i + 2, r.y - i, r.x - i + r.w - 4, r.y - i, COLOR_SIDES);
+		DrawLine(r.x - i, r.y - i + 2, r.x - i, r.y - i + r.h - 4, sides);
+		DrawLine(r.x - i + 2, r.y - i, r.x - i + r.w - 4, r.y - i, sides);
 	}
-	DrawPixel(r.x, r.y + 2, COLOR_SIDES);
-	DrawPixel(r.x + 2, r.y, COLOR_SIDES);
+	DrawPixel(r.x, r.y + 2, sides);
+	DrawPixel(r.x + 2, r.y, sides);
 
 	/* Edges of the back */
-	DrawPixel(r.x + r.w - bw - 4, r.y - bw + 1, COLOR_DEDGES);
-	DrawLine(r.x - bw + 3, r.y - bw, r.x + r.w - bw - 5, r.y - bw, COLOR_DEDGES);
-	DrawPixel(r.x - bw + 2, r.y - bw + 1, COLOR_DEDGES);
-	DrawPixel(r.x - bw + 1, r.y - bw + 2, COLOR_DEDGES);
-	DrawLine(r.x - bw, r.y - bw + 3, r.x - bw, r.y + r.h - bw - 5, COLOR_DEDGES);
-	DrawPixel(r.x - bw + 1, r.y + r.h - bw - 4, COLOR_DEDGES);
+	DrawPixel(r.x + r.w - bw - 4, r.y - bw + 1, darkedges);
+	DrawLine(r.x - bw + 3, r.y - bw, r.x + r.w - bw - 5, r.y - bw, darkedges);
+	DrawPixel(r.x - bw + 2, r.y - bw + 1, darkedges);
+	DrawPixel(r.x - bw + 1, r.y - bw + 2, darkedges);
+	DrawLine(r.x - bw, r.y - bw + 3, r.x - bw, r.y + r.h - bw - 5, darkedges);
+	DrawPixel(r.x - bw + 1, r.y + r.h - bw - 4, darkedges);
 
 	/* Edges of the sides */
-	DrawLine(r.x - bw + 2, r.y - bw + 2, r.x + 1, r.y + 1, COLOR_LEDGES);
-	DrawLine(r.x - bw + 3, r.y - bw + 2, r.x + 1, r.y, COLOR_MEDGES);
-	DrawLine(r.x - bw + 2, r.y - bw + 3, r.x, r.y + 1, COLOR_MEDGES);
-	DrawLine(r.x + r.w - bw - 3, r.y - bw + 1, r.x + r.w - 5, r.y - 1, COLOR_DEDGES);
-	DrawLine(r.x - bw + 1, r.y + r.h - bw - 3, r.x - 1, r.y + r.h - 5, COLOR_DEDGES);
+	DrawLine(r.x - bw + 2, r.y - bw + 2, r.x + 1, r.y + 1, lightedges);
+	DrawLine(r.x - bw + 3, r.y - bw + 2, r.x + 1, r.y, mediumedges);
+	DrawLine(r.x - bw + 2, r.y - bw + 3, r.x, r.y + 1, mediumedges);
+	DrawLine(r.x + r.w - bw - 3, r.y - bw + 1, r.x + r.w - 5, r.y - 1, darkedges);
+	DrawLine(r.x - bw + 1, r.y + r.h - bw - 3, r.x - 1, r.y + r.h - 5, darkedges);
 
 	/* Front */
 	FillArea(r.x + 2, r.y + 2, r.w - 4, r.h - 4, face);
@@ -201,14 +221,14 @@ static void draw_chip(const position_t *pos, chip_t chip)
 	DrawLine(r.x + 3, r.y + r.h - 2, r.x + r.w - 4, r.y + r.h - 2, face);
 	DrawLine(r.x + 1, r.y + 3, r.x + 1, r.y + r.h - 4, face);
 	DrawLine(r.x + r.w - 2, r.y + 3, r.x + r.w - 2, r.y + r.h - 4, face);
-	DrawLine(r.x + 3, r.y, r.x + r.w - 4, r.y, COLOR_BORDER);
-	DrawLine(r.x + 3, r.y + r.h - 1, r.x + r.w - 4, r.y + r.h - 1, COLOR_BORDER);
-	DrawLine(r.x, r.y + 3, r.x, r.y + r.h - 4, COLOR_BORDER);
-	DrawLine(r.x + r.w - 1, r.y + 3, r.x + r.w - 1, r.y + r.h - 4, COLOR_BORDER);
-	DrawLine(r.x + 2, r.y + 1, r.x + 1, r.y + 2, COLOR_BORDER);
-	DrawLine(r.x + r.w - 3, r.y + 1, r.x + r.w - 2, r.y + 2, COLOR_BORDER);
-	DrawLine(r.x + 2, r.y + r.h - 2, r.x + 1, r.y + r.h - 3, COLOR_BORDER);
-	DrawLine(r.x + r.w - 3, r.y + r.h - 2, r.x + r.w - 2, r.y + r.h - 3, COLOR_BORDER);
+	DrawLine(r.x + 3, r.y, r.x + r.w - 4, r.y, border);
+	DrawLine(r.x + 3, r.y + r.h - 1, r.x + r.w - 4, r.y + r.h - 1, border);
+	DrawLine(r.x, r.y + 3, r.x, r.y + r.h - 4, border);
+	DrawLine(r.x + r.w - 1, r.y + 3, r.x + r.w - 1, r.y + r.h - 4, border);
+	DrawLine(r.x + 2, r.y + 1, r.x + 1, r.y + 2, border);
+	DrawLine(r.x + r.w - 3, r.y + 1, r.x + r.w - 2, r.y + 2, border);
+	DrawLine(r.x + 2, r.y + r.h - 2, r.x + 1, r.y + r.h - 3, border);
+	DrawLine(r.x + r.w - 3, r.y + r.h - 2, r.x + r.w - 2, r.y + r.h - 3, border);
 
 	StretchBitmap(r.x + 5, r.y + 5, r.w - 10, r.h - 10, (ibitmap*)bitmaps[chip], 0);
 
@@ -224,9 +244,9 @@ static int is_covered_by(const void *p1, const void *p2)
 	const position_t *s1 = p1;
 	const position_t *s2 = p2;
 
-	if(s1->k < s2->k)
+	if(s1->z < s2->z)
 		return 1;
-	if(s1->k > s2->k)
+	if(s1->z > s2->z)
 		return 0;
 
 	if(s2->y >= s1->y + 2)
@@ -252,17 +272,19 @@ static ifont *get_help_font(void)
 static void main_repaint(void)
 {
 	int i, j, k;
-	position_t chips[144];
+	position_t *chips = (position_t *) malloc(sizeof(position_t) * g_board.chip_count);
 	int chip_count = 0;
 
 	for(i = 0; i < MAX_ROW_COUNT; ++i) {
 		for(j = 0; j < MAX_COL_COUNT; ++j) {
 			for(k = 0; k < MAX_HEIGHT; ++k) {
+				if(chip_count >= g_board.chip_count)
+					break;
 				const chip_t chip = g_board.columns[i][j].chips[k];
 				if(chip) {
 					chips[chip_count].x = j;
 					chips[chip_count].y = i;
-					chips[chip_count].k = k;
+					chips[chip_count].z = k;
 					++chip_count;
 				}
 			}
@@ -326,8 +348,9 @@ static int finished(void)
 				position_t pos;
 				pos.y = i;
 				pos.x = j;
-				pos.k = k;
-				if(board_get(&g_board, &pos) != 0)
+				pos.z = k;
+				chip_t chip = board_get(&g_board, &pos);
+				if(chip != 0 && (chip & CHIP_CATEGORY_MASK) != CHIP_CATEGORY_BLOCK)
 					return 0;
 			}
 		}
@@ -384,6 +407,7 @@ static void select_cell(void)
 
 		board_set(&g_board, position1, 0);
 		board_set(&g_board, position2, 0);
+		g_board.chip_count -= 2;
 
 		selection_pos = -1;
 
@@ -769,29 +793,34 @@ static int load_game(void)
 	for(i = 0; i < MAX_ROW_COUNT; ++i) {
 		for(j = 0; j < MAX_COL_COUNT; ++j) {
 			for(k = 0; k < MAX_HEIGHT; ++k) {
-				int ch;
+				int chip;
 				position_t pos;
 				pos.y = i;
 				pos.x = j;
-				pos.k = k;
+				pos.z = k;
 
-				fscanf(f, "%d\n", &ch);
+				fscanf(f, "%d\n", &chip);
 
-				board_set(&g_board, &pos, ch);
+				board_set(&g_board, &pos, chip);
+				if(chip)
+					++g_board.chip_count;
 			}
 		}
 	}
 
 	fscanf(f, "%d\n", &undo_stack.count);
 	for(i = 0; i < undo_stack.count; ++i) {
-		int chip;
+		int chip, x, y, z;
 		fscanf(
 			f, "%d %d %d %d\n",
-			&undo_stack.positions[i].y,
-			&undo_stack.positions[i].x,
-			&undo_stack.positions[i].k,
+			&y,
+			&x,
+			&z,
 			&chip);
-		undo_stack.chips[i] = chip;
+		undo_stack.positions[i].y = (unsigned char) y;
+		undo_stack.positions[i].x = (unsigned char) x;
+		undo_stack.positions[i].z = (unsigned char) z;
+		undo_stack.chips[i] = (chip_t) chip;
 	}
 
 	fclose(f);
@@ -816,7 +845,7 @@ static void save_game(void)
 				position_t pos;
 				pos.y = i;
 				pos.x = j;
-				pos.k = k;
+				pos.z = k;
 				ch = board_get(&g_board, &pos);
 
 				fprintf(f, "%d\n", ch);
@@ -830,39 +859,38 @@ static void save_game(void)
 			f, "%d %d %d %d\n",
 			undo_stack.positions[i].y,
 			undo_stack.positions[i].x,
-			undo_stack.positions[i].k,
+			undo_stack.positions[i].z,
 			undo_stack.chips[i]);
 	}
 
 	fclose(f);
 }
 
+static int is_map(const struct dirent *file)
+{
+	int len = strlen(file->d_name) - strlen(MAPS_EXT);
+	return len > 0 && strcmp(file->d_name + len, MAPS_EXT) == 0;
+}
+
 static void scan_maps(const char *directory)
 {
-	map_list_size = 0;
-	DIR *dir;
-	struct dirent *entry;
-	dir = opendir(directory);
-	if(dir) {
-		while((entry = readdir(dir)) != NULL) {
-			int len = strlen(entry->d_name) - strlen(MAPS_EXT);
-			if(len > 0 && strcmp(entry->d_name + len, MAPS_EXT) == 0)
-				++map_list_size;
-		}
+	struct dirent **files;
+	map_list_size = scandir(directory, &files, &is_map, alphasort);
+	
+	if(map_list_size >= 0) {
 		map_list = (char **) malloc(sizeof(char *) * (map_list_size + 1));
-		rewinddir(dir);
 		int index = 0;
-		while((entry = readdir(dir)) != NULL && index < map_list_size) {
-			int len = strlen(entry->d_name) - strlen(MAPS_EXT);
-			if(len > 0 && strcmp(entry->d_name + len, MAPS_EXT) == 0) {
-				map_list[index] = (char *) malloc(len + 1);
-				strncpy(map_list[index], entry->d_name, len);
-				map_list[len] = 0;
-				++index;
-			}
+		for(; index < map_list_size; ++index) {
+			int len = strlen(files[index]->d_name) - strlen(MAPS_EXT);
+			if(len < 0)
+				len = 0; /* Just to be sure */
+			map_list[index] = (char *) malloc(len + 1);
+			strncpy(map_list[index], files[index]->d_name, len);
+			map_list[index][len] = 0;
+			free(files[index]);
 		}
 		map_list[index] = NULL;
-		closedir(dir);
+		free(files);
 	}
 }
 
@@ -886,6 +914,7 @@ static map_t *load_map(const char *name)
 		if(!f)
 			return NULL;
 
+		/* Board size */
 		int col_count = 32;
 		int row_count = 18;
 		if(
@@ -893,21 +922,49 @@ static map_t *load_map(const char *name)
 			col_count < 0 || col_count >= MAX_COL_COUNT ||
 			row_count < 0 || row_count >= MAX_ROW_COUNT)
 			return NULL;
-		loaded_map->col_count = col_count;
-		loaded_map->row_count = row_count;
+		loaded_map->col_count = (unsigned char) col_count;
+		loaded_map->row_count = (unsigned char) row_count;
 
-		unsigned int pos;
-		for(pos = 0; pos < CHIP_COUNT; ++pos) {
-			int x = 0, y = 0, z = 0;
+		/* Chip positions */
+		unsigned int chip;
+		int x = 0, y = 0, z = 0;
+		for(chip = 0; chip < CHIP_COUNT; ++chip) {
 			if(
 				fscanf(f, "%d %d %d\n", &x, &y, &z) == EOF ||
 				x < 0 || x >= col_count ||
 				y < 0 || y >= row_count ||
 				z < 0 || z >= MAX_HEIGHT)
 				return NULL;
-			loaded_map->map[pos].x = x;
-			loaded_map->map[pos].y = y;
-			loaded_map->map[pos].z = z;
+
+			loaded_map->chip[chip].x = (unsigned char) x;
+			loaded_map->chip[chip].y = (unsigned char) y;
+			loaded_map->chip[chip].z = (unsigned char) z;
+			x = 0;
+			y = 0;
+			z = 0;
+		}
+
+		/* All following positions are blocker positions */
+		while(fscanf(f, "%d %d %d\n", &x, &y, &z) != EOF) {
+			if(
+				x < 0 || x >= col_count ||
+				y < 0 || y >= row_count ||
+				z < 0 || z >= MAX_HEIGHT)
+				return NULL;
+
+			const unsigned int block = loaded_map->block_count;
+			++loaded_map->block_count;
+			if(loaded_map->block == NULL)
+				loaded_map->block = (position_t *) malloc(sizeof(position_t));
+			else
+				loaded_map->block = (position_t *) realloc(loaded_map->block, sizeof(position_t) * loaded_map->block_count);
+
+			loaded_map->block[block].x = (unsigned char) x;
+			loaded_map->block[block].y = (unsigned char) y;
+			loaded_map->block[block].z = (unsigned char) z;
+			x = 0;
+			y = 0;
+			z = 0;
 		}
 
 		fclose(f);

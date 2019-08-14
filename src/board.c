@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <string.h>
 #include "board.h"
 #include "common.h"
@@ -6,7 +7,7 @@ int position_equal(const position_t *pos1, const position_t *pos2)
 {
 	return pos1->x == pos2->x
 		&& pos1->y == pos2->y
-		&& pos1->k == pos2->k;
+		&& pos1->z == pos2->z;
 }
 
 chip_t board_get(const board_t *board, const position_t *pos)
@@ -15,10 +16,10 @@ chip_t board_get(const board_t *board, const position_t *pos)
 		return 0;
 	if(pos->x < 0 || pos->x >= MAX_COL_COUNT)
 		return 0;
-	if(pos->k < 0 || pos->k >= MAX_HEIGHT)
+	if(pos->z < 0 || pos->z >= MAX_HEIGHT)
 		return 0;
 
-	return board->columns[pos->y][pos->x].chips[pos->k];
+	return board->columns[pos->y][pos->x].chips[pos->z];
 }
 
 void board_set(board_t *board, const position_t *pos, chip_t chip)
@@ -27,10 +28,10 @@ void board_set(board_t *board, const position_t *pos, chip_t chip)
 		return;
 	if(pos->x < 0 || pos->x >= MAX_COL_COUNT)
 		return;
-	if(pos->k < 0 || pos->k >= MAX_HEIGHT)
+	if(pos->z < 0 || pos->z >= MAX_HEIGHT)
 		return;
 
-	board->columns[pos->y][pos->x].chips[pos->k] = chip;
+	board->columns[pos->y][pos->x].chips[pos->z] = chip;
 }
 
 static int column_height(board_t *board, int y, int x)
@@ -69,14 +70,17 @@ static int selectable(board_t *board, int y, int x)
 	int h = column_height(board, y, x);
 	int l, r;
 
-	if(h == 0)
+	/* No chip or a blocker? */
+	if(h == 0 || (safe_get(board, y, x, h - 1) & CHIP_CATEGORY_MASK) == CHIP_CATEGORY_BLOCK)
 		return 0;
 
+	/* Anything on top? */
 	for(i = -1; i <= 1; ++i)
 		for(j = -1; j <= 1; ++j)
 			if(safe_get(board, y+i, x+j, h) != 0)
 				return 0;
 
+	/* Anything to the left or right? */
 	l = safe_get(board, y-1, x-2, h-1)
 		|| safe_get(board, y, x-2, h-1)
 		|| safe_get(board, y+1, x-2, h-1);
@@ -104,7 +108,7 @@ positions_t* get_selectable_positions(board_t *board)
 			if(h) {
 				positions->positions[positions->count].y = i;
 				positions->positions[positions->count].x = j;
-				positions->positions[positions->count].k = h - 1;
+				positions->positions[positions->count].z = h - 1;
 				++positions->count;
 			}
 		}
@@ -119,11 +123,10 @@ static int colorize(board_t *board, chip_t *pairs, int pile_size, board_t *resul
 
 	positions_t *positions = get_selectable_positions(board);
 
-	if(positions->count < 2)
-		{
-			free(positions);
-			return 0;
-		}
+	if(positions->count < 2) {
+		free(positions);
+		return 0;
+	}
 
 	shuffle(positions->positions, positions->count, sizeof(position_t));
 
@@ -151,8 +154,8 @@ static int colorize(board_t *board, chip_t *pairs, int pile_size, board_t *resul
 					return 1;
 				}
 
-			board_set(board, p1, 0xFF);
-			board_set(board, p2, 0xFF);
+			board_set(board, p1, CHIP_PLACEHOLDER);
+			board_set(board, p2, CHIP_PLACEHOLDER);
 		}
 	}
 
@@ -160,41 +163,34 @@ static int colorize(board_t *board, chip_t *pairs, int pile_size, board_t *resul
 	return 0;
 }
 
-static void get_pile(chip_t pile[144])
+static void get_pile(chip_t pile[CHIP_COUNT])
 {
 	int rank, count;
 	int index = 0;
 
-	/**simples**/
+	/* Simples */
 	for(rank = 1; rank <= 9; ++rank) {
-		/*characters*/
 		for(count = 0; count < 4; ++count)
-			pile[index++] = 0x10 | rank;
-		/*dots*/
+			pile[index++] = CHIP_CATEGORY_CHARACTER | rank;
 		for(count = 0; count < 4; ++count)
-			pile[index++] = 0x20 | rank;
-		/*bamboo*/
+			pile[index++] = CHIP_CATEGORY_DOTS | rank;
 		for(count = 0; count < 4; ++count)
-			pile[index++] = 0x30 | rank;
+			pile[index++] = CHIP_CATEGORY_BAMBOO | rank;
 	}
-	/**honors**/
+	/* Honors */
 	for(rank = 1; rank <= 4; ++rank) {
-		/*winds*/
 		for(count = 0; count < 4; ++count)
-			pile[index++] = 0x40 | rank;
+			pile[index++] = CHIP_CATEGORY_WINDS | rank;
 	}
 	for(rank = 1; rank <= 3; ++rank) {
-		/*dragons*/
 		for(count = 0; count < 4; ++count)
-			pile[index++] = 0x50 | rank;
+			pile[index++] = CHIP_CATEGORY_DRAGONS | rank;
 	}
-	/**bonus**/
-	/*seasons*/
+	/* Bonus */
 	for(rank = 1; rank <= 4; ++rank)
-		pile[index++] = 0x60 | rank;
-	/*flowers*/
+		pile[index++] = CHIP_CATEGORY_SEASONS | rank;
 	for(rank = 1; rank <= 4; ++rank)
-		pile[index++] = 0x70 | rank;
+		pile[index++] = CHIP_CATEGORY_FLOWERS | rank;
 }
 
 static void clear_board(board_t *board)
@@ -204,38 +200,63 @@ static void clear_board(board_t *board)
 	for(i = 0; i < MAX_ROW_COUNT; ++i)
 		for(j = 0; j < MAX_COL_COUNT; ++j)
 			memset(&board->columns[i][j].chips[0], 0, sizeof(chip_t) * MAX_HEIGHT);
+
+	board->chip_count = 0;
 }
 
 void generate_board(board_t *board, map_t *map)
 {
 	int i;
 	board_t tmp;
-	chip_t pile[144];
+	chip_t pile[CHIP_COUNT];
 
 	/* prepare pile */
 	get_pile(pile);
-	shuffle(&pile[136], 4, sizeof(chip_t));
-	shuffle(&pile[140], 4, sizeof(chip_t));
-	shuffle(pile, 72, 2 * sizeof(chip_t));
+	shuffle(&pile[136], 4, sizeof(chip_t)); /* Shuffle seasons */
+	shuffle(&pile[140], 4, sizeof(chip_t)); /* Shuffle flowers */
+	shuffle(pile, 72, 2 * sizeof(chip_t)); /* Shuffle everything, keeping pairs together */
 
+	/* Build temporary board that will be taken apart according to the rules in random order */
 	clear_board(&tmp);
-	for(i = 0; i < 144; ++i) {
-		const int x = map->map[i].x;
-		const int y = map->map[i].y;
-		const int z = map->map[i].z;
+	for(i = 0; i < CHIP_COUNT; ++i) {
+		const int x = map->chip[i].x;
+		const int y = map->chip[i].y;
+		const int z = map->chip[i].z;
 
-		tmp.columns[y][x].chips[z] = 0xFF;
+		tmp.columns[y][x].chips[z] = CHIP_PLACEHOLDER;
+	}
+	for(i = 0; i < map->block_count; ++i) {
+		const int x = map->block[i].x;
+		const int y = map->block[i].y;
+		const int z = map->block[i].z;
+
+		tmp.columns[y][x].chips[z] = CHIP_CATEGORY_BLOCK | 1;
 	}
 
+	/* Now take the temporary board apart and fill the result board that way */
 	clear_board(board);
-	colorize(&tmp, pile, 144, board);
+	colorize(&tmp, pile, CHIP_COUNT, board);
+
+	/* Blockers are still missing since they couldn't be taken, add them now */
+	for(i = 0; i < map->block_count; ++i) {
+		const int x = map->block[i].x;
+		const int y = map->block[i].y;
+		const int z = map->block[i].z;
+
+		board->columns[y][x].chips[z] = CHIP_CATEGORY_BLOCK | 1;
+	}
+
+	board->chip_count = CHIP_COUNT + map->block_count;
 }
 
 int fits(chip_t a, chip_t b)
 {
-	int bonus = a & 0xe0;
-	if((bonus & 0xe0) == 0x60) /*flowers and seasons*/
-		return (a & 0xf0) == (b & 0xf0);
+	if((a & CHIP_CATEGORY_MASK) == CHIP_CATEGORY_BLOCK || (b & CHIP_CATEGORY_MASK) == CHIP_CATEGORY_BLOCK) /* Blockers */
+		return false;
+
+	int bonus = a & CHIP_CATEGORY2_MASK;
+	if(bonus == CHIP_CATEGORY2_BONUS) /* Flowers and seasons */
+		return (a & CHIP_CATEGORY_MASK) == (b & CHIP_CATEGORY_MASK);
 	else
 		return a == b;
 }
