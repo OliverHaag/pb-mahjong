@@ -21,3 +21,4 @@ _deps
 /images/*.c
 /images/chip_*.bmp
 /install
+/pb-mahjong-*.tar.xz
