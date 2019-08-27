@@ -464,6 +464,34 @@ static void select_cell(void)
 	}
 }
 
+static void make_hint()
+{
+	int i, j;
+
+	for(;;) {
+		for(i = help_index; i < g_selectable->count - 1; ++i) {
+			const chip_t chip1 = board_get(&g_board, &g_selectable->positions[i]);
+
+			for(j = i + 1 + help_offset; j < g_selectable->count; ++j) {
+				const chip_t chip2 = board_get(&g_board, &g_selectable->positions[j]);
+
+				if(fits(chip1, chip2)) {
+					help_index = i;
+					help_offset = j - i - 1 + 1;
+					selection_pos = i;
+					caret_pos = j;
+					return;
+				}
+			}
+			help_offset = 0;
+		}
+		if(help_index == 0)
+			return; /*Should never be reached, but this avoids an endless loop in that case */
+		help_index = 0;
+		help_offset = 0;
+	}
+}
+
 static int game_handler(int type, int par1, int par2)
 {
 	switch(type) {
@@ -508,6 +536,16 @@ static int game_handler(int type, int par1, int par2)
 						show_popup(NULL, MSG_NONE, game_menu, menu_handler);
 					return 1;
 				}
+				case IV_KEY_PREV:
+					make_hint();
+					main_repaint();
+					FullUpdate();
+					return 1;
+				case IV_KEY_NEXT:
+					undo();
+					main_repaint();
+					FullUpdate();
+					return 1;
 			}
 			break;
 
@@ -539,34 +577,6 @@ static int game_handler(int type, int par1, int par2)
 		}
 	}
 	return 0;
-}
-
-static void make_hint(void)
-{
-	int i, j;
-
-	for(;;) {
-		for(i = help_index; i < g_selectable->count - 1; ++i) {
-			const chip_t chip1 = board_get(&g_board, &g_selectable->positions[i]);
-
-			for(j = i + 1 + help_offset; j < g_selectable->count; ++j) {
-				const chip_t chip2 = board_get(&g_board, &g_selectable->positions[j]);
-
-				if(fits(chip1, chip2)) {
-					help_index = i;
-					help_offset = j - i - 1 + 1;
-					selection_pos = i;
-					caret_pos = j;
-					return;
-				}
-			}
-			help_offset = 0;
-		}
-		if(help_index == 0)
-			return; /*Should never be reached, but this avoids an endless loop in that case */
-		help_index = 0;
-		help_offset = 0;
-	}
 }
 
 static message_id main_menu_wo_load[] = {
@@ -633,7 +643,8 @@ static void menu_handler(int index)
 			break;
 
 		case MSG_NEW_GAME_CUSTOM:
-			show_popup_list(&background, MSG_NONE, map_list, load_map_handler);
+			if(map_list != NULL)
+				show_popup_list(&background, MSG_NONE, map_list, load_map_handler);
 			break;
 
 		case MSG_LOAD:
@@ -891,6 +902,9 @@ static void scan_maps(const char *directory)
 		}
 		map_list[index] = NULL;
 		free(files);
+	}
+	else {
+		map_list = NULL;
 	}
 }
 
